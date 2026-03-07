@@ -1,0 +1,17 @@
+# canon/canon.meta.yaml
+canon_version: 1
+repo_id: "sovereign-agent-template"
+precedence:
+  - identity
+  - security
+  - architecture
+  - process
+  - skills
+
+defaults:
+  deny_on_unknown_action: true
+  deny_on_schema_error: true
+  require_declared_scope_for_mutations: true
+
+paths:
+  repo_root: "."

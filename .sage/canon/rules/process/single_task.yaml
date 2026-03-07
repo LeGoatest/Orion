@@ -1,0 +1,8 @@
+# canon/rules/process/single_task.yaml
+id: PROCESS_SINGLE_TASK
+layer: process
+effect: deny
+match:
+  condition: MULTIPLE_ACTIVE_TASKS
+reason_code: SINGLE_TASK_ONLY
+message: "Only one active task may run."

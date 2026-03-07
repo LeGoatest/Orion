@@ -1,0 +1,27 @@
+task_groups:
+  - id: architecture
+    modes_allowed:
+      - ENTER_DEEP_GOVERNANCE_MODE
+    skills_allowed: false
+
+  - id: development
+    modes_allowed:
+      - ENTER_SPEC_MODE
+      - ENTER_EXEC_MODE
+    skills_allowed: true
+
+  - id: operations
+    modes_allowed:
+      - ENTER_SPEC_MODE
+      - ENTER_EXEC_MODE
+    skills_allowed: true
+
+  - id: docs
+    modes_allowed:
+      - ENTER_SPEC_MODE
+    skills_allowed: true
+
+  - id: audit
+    modes_allowed:
+      - ENTER_DEEP_GOVERNANCE_MODE
+    skills_allowed: true

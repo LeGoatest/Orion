@@ -1,0 +1,8 @@
+# canon/rules/identity/canon_supremacy.yaml
+id: IDENTITY_CANON_SUPREMACY
+layer: identity
+effect: deny
+match:
+  condition: CANON_CONFLICT
+reason_code: CANON_SUPREMACY
+message: "Conflicts with Canon: refusal required."
