@@ -2,63 +2,84 @@ package cognition
 
 import (
 	"context"
+	"fmt"
+	"time"
+
+	"orion/internal/retrieval"
+	"orion/internal/runtime/goal"
+	"orion/internal/types"
 )
 
-// OODALPipeline represents the cognitive loop phases
-type OODALPipeline interface {
-	Observe(ctx context.Context, input interface{}) (interface{}, error)
-	Orient(ctx context.Context, observation interface{}) (interface{}, error)
-	Decide(ctx context.Context, orientation interface{}) (interface{}, error)
-	Act(ctx context.Context, decision interface{}) (interface{}, error)
-	Learn(ctx context.Context, result interface{}) error
+type CognitionEngine struct {
+	pipeline     OODALPipeline
+	eventBus     *types.EventBus
+	retrieval    *retrieval.RetrievalEngine
 }
 
-// Engine drives the OODA-L cognitive loop
-type Engine struct {
-	pipeline OODALPipeline
-}
-
-// NewEngine creates a new Engine
-func NewEngine(pipeline OODALPipeline) *Engine {
-	return &Engine{
-		pipeline: pipeline,
+func NewCognitionEngine(pipeline OODALPipeline, eb *types.EventBus, re *retrieval.RetrievalEngine) *CognitionEngine {
+	return &CognitionEngine{
+		pipeline:  pipeline,
+		eventBus:  eb,
+		retrieval: re,
 	}
 }
 
-// Process runs a single iteration of the OODA-L loop
-func (e *Engine) Process(ctx context.Context, input interface{}) error {
-	// Observe
-	observation, err := e.pipeline.Observe(ctx, input)
-	if err != nil {
-		return err
-	}
+func (ce *CognitionEngine) Process(ctx context.Context, g *goal.Goal) error {
+	fmt.Printf("CognitionEngine: Starting OODA-L-G loop for goal %s\n", g.ID)
 
-	// Orient
-	orientation, err := e.pipeline.Orient(ctx, observation)
-	if err != nil {
-		return err
-	}
+	// OBSERVE
+	obs, err := ce.pipeline.Observe(ctx, g.Description)
+	if err != nil { return err }
+	ce.eventBus.Publish(types.Event{Type: "observation_recorded", Payload: obs, CreatedAt: time.Now()})
 
-	// Decide
-	decision, err := e.pipeline.Decide(ctx, orientation)
-	if err != nil {
-		return err
-	}
+	// ORIENT
+	bundle, err := ce.pipeline.Orient(ctx, obs)
+	if err != nil { return err }
 
-	// Act
-	result, err := e.pipeline.Act(ctx, decision)
-	if err != nil {
-		return err
-	}
+	// DECIDE
+	decision, err := ce.pipeline.Decide(ctx, bundle)
+	if err != nil { return err }
 
-	// Learn
-	err = e.pipeline.Learn(ctx, result)
-	if err != nil {
-		return err
-	}
+	// ACT
+	result, err := ce.pipeline.Act(ctx, decision)
+	if err != nil { return err }
+	ce.eventBus.Publish(types.Event{Type: "tool_executed", Payload: result, CreatedAt: time.Now()})
+
+	// LEARN
+	if err := ce.pipeline.Learn(ctx, result); err != nil { return err }
+
+	// GARDEN
+	if err := ce.pipeline.Garden(ctx, g.ID); err != nil { return err }
 
 	return nil
 }
 
-// DefaultPipeline provides a basic implementation of the OODA-L loop
-type DefaultPipeline struct{}
+func (p *DefaultPipeline) Observe(ctx context.Context, input interface{}) (interface{}, error) {
+	fmt.Println("Cognition: Phase Observe - Creating memory node for intent")
+	return input, nil
+}
+
+func (p *DefaultPipeline) Orient(ctx context.Context, observation interface{}) (interface{}, error) {
+	fmt.Println("Cognition: Phase Orient - Assembling ContextBundle")
+	return &retrieval.ContextBundle{}, nil
+}
+
+func (p *DefaultPipeline) Decide(ctx context.Context, orientation interface{}) (interface{}, error) {
+	fmt.Println("Cognition: Phase Decide - Generating execution plan")
+	return "plan", nil
+}
+
+func (p *DefaultPipeline) Act(ctx context.Context, decision interface{}) (interface{}, error) {
+	fmt.Println("Cognition: Phase Act - Executing tools")
+	return "result", nil
+}
+
+func (p *DefaultPipeline) Learn(ctx context.Context, result interface{}) error {
+	fmt.Println("Cognition: Phase Learn - Updating knowledge graph")
+	return nil
+}
+
+func (p *DefaultPipeline) Garden(ctx context.Context, goalID string) error {
+	fmt.Println("Cognition: Phase Garden - Maintaining memory quality")
+	return nil
+}

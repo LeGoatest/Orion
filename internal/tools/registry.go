@@ -2,65 +2,46 @@ package tools
 
 import (
 	"context"
-	"sync"
+	"fmt"
 )
 
-// Tool defines the interface for an Orion tool
+type SafetyLevel string
+
+const (
+	LevelSafe       SafetyLevel = "safe"
+	LevelRestricted SafetyLevel = "restricted"
+	LevelDangerous  SafetyLevel = "dangerous"
+)
+
 type Tool interface {
 	Name() string
 	Description() string
-	Execute(ctx context.Context, input interface{}) (interface{}, error)
+	Safety() SafetyLevel
+	Execute(ctx context.Context, input string) (string, error)
 }
 
-// BaseTool provides common functionality for tools
-type BaseTool struct {
-	name        string
-	description string
-}
-
-func (t *BaseTool) Name() string {
-	return t.name
-}
-
-func (t *BaseTool) Description() string {
-	return t.description
-}
-
-// Registry maintains a set of registered tools
-type Registry struct {
-	mu    sync.RWMutex
+type ToolRegistry struct {
 	tools map[string]Tool
 }
 
-// NewRegistry creates a new Registry
-func NewRegistry() *Registry {
-	return &Registry{
-		tools: make(map[string]Tool),
+func NewToolRegistry() *ToolRegistry {
+	return &ToolRegistry{tools: make(map[string]Tool)}
+}
+
+func (tr *ToolRegistry) Register(tool Tool) {
+	tr.tools[tool.Name()] = tool
+}
+
+func (tr *ToolRegistry) ExecuteTool(ctx context.Context, name, input string) (string, error) {
+	tool, ok := tr.tools[name]
+	if !ok {
+		return "", fmt.Errorf("tool not found: %s", name)
 	}
-}
 
-// Register adds a tool to the registry
-func (r *Registry) Register(tool Tool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.tools[tool.Name()] = tool
-}
-
-// GetTool retrieves a tool by name
-func (r *Registry) GetTool(name string) (Tool, bool) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	tool, ok := r.tools[name]
-	return tool, ok
-}
-
-// ListTools returns all registered tools
-func (r *Registry) ListTools() []Tool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	list := make([]Tool, 0, len(r.tools))
-	for _, tool := range r.tools {
-		list = append(list, tool)
+	if tool.Safety() == LevelDangerous {
+		fmt.Printf("Warning: Executing dangerous tool %s\n", name)
+		// Policy approval logic
 	}
-	return list
+
+	return tool.Execute(ctx, input)
 }

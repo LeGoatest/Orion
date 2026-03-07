@@ -3,7 +3,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"orion/internal/cognition"
 )
@@ -55,15 +54,6 @@ func NewConversationAgent(id, name string, eb *EventBus) *ConversationAgent {
 
 func (a *ConversationAgent) Start(ctx context.Context) error {
 	fmt.Printf("Agent [%s] (%s) starting...\n", a.name, a.agentType)
-
-	a.eventBus.Subscribe("goal_created", func(event Event) {
-		fmt.Printf("Agent [%s]: New goal received\n", a.name)
-	})
-
-	a.eventBus.Subscribe("goal_completed", func(event Event) {
-		fmt.Printf("Agent [%s]: Goal completion recorded\n", a.name)
-	})
-
 	return nil
 }
 
@@ -75,10 +65,10 @@ func (a *ConversationAgent) Stop(ctx context.Context) error {
 // PlannerAgent: Breaks down goals into execution plans
 type PlannerAgent struct {
 	BaseAgent
-	engine *cognition.Engine
+	engine *cognition.CognitionEngine
 }
 
-func NewPlannerAgent(id, name string, eb *EventBus, engine *cognition.Engine) *PlannerAgent {
+func NewPlannerAgent(id, name string, eb *EventBus, engine *cognition.CognitionEngine) *PlannerAgent {
 	return &PlannerAgent{
 		BaseAgent: BaseAgent{
 			id:        id,
@@ -92,18 +82,6 @@ func NewPlannerAgent(id, name string, eb *EventBus, engine *cognition.Engine) *P
 
 func (a *PlannerAgent) Start(ctx context.Context) error {
 	fmt.Printf("Agent [%s] (%s) starting...\n", a.name, a.agentType)
-
-	a.eventBus.Subscribe("goal_created", func(event Event) {
-		fmt.Printf("Agent [%s]: Planning execution steps for goal\n", a.name)
-
-		// Trigger OODA-L cognition loop for the goal
-		go func() {
-			if err := a.engine.Process(ctx, "Analyze the goal: " + string(event.Payload)); err != nil {
-				fmt.Printf("Agent [%s]: Cognition processing failed: %v\n", a.name, err)
-			}
-		}()
-	})
-
 	return nil
 }
 
@@ -130,11 +108,6 @@ func NewAnalysisAgent(id, name string, eb *EventBus) *AnalysisAgent {
 
 func (a *AnalysisAgent) Start(ctx context.Context) error {
 	fmt.Printf("Agent [%s] (%s) starting...\n", a.name, a.agentType)
-
-	a.eventBus.Subscribe("tool_executed", func(event Event) {
-		fmt.Printf("Agent [%s]: Analyzing tool execution result\n", a.name)
-	})
-
 	return nil
 }
 
@@ -187,20 +160,6 @@ func NewMemoryGardenerAgent(id, name string, eb *EventBus) *MemoryGardenerAgent 
 
 func (a *MemoryGardenerAgent) Start(ctx context.Context) error {
 	fmt.Printf("Agent [%s] (%s) starting...\n", a.name, a.agentType)
-
-	// Start periodic gardening
-	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				fmt.Printf("Agent [%s]: Running knowledge consolidation\n", a.name)
-			}
-		}
-	}()
-
 	return nil
 }
 
@@ -227,11 +186,6 @@ func NewPatternDetectorAgent(id, name string, eb *EventBus) *PatternDetectorAgen
 
 func (a *PatternDetectorAgent) Start(ctx context.Context) error {
 	fmt.Printf("Agent [%s] (%s) starting...\n", a.name, a.agentType)
-
-	a.eventBus.Subscribe("goal_completed", func(event Event) {
-		fmt.Printf("Agent [%s]: Checking for patterns in completed goals\n", a.name)
-	})
-
 	return nil
 }
 
