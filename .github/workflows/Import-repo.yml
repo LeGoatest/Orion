@@ -1,0 +1,37 @@
+name: Import SAGE repo
+
+on:
+  workflow_dispatch:
+    inputs:
+      sage_ref:
+        description: "Branch, tag, or commit to import from SAGE"
+        required: true
+        default: "main"
+
+permissions:
+  contents: write
+
+jobs:
+  import-sage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v5
+
+      - name: Remove existing .sage
+        run: rm -rf .sage
+
+      - name: Clone SAGE
+        run: git clone --depth 1 --branch "${{ github.event.inputs.sage_ref }}" https://github.com/LeGoatest/SAGE .sage
+
+      - name: Strip git metadata
+        run: rm -rf .sage/.git .sage/.github
+
+      - name: Commit imported SAGE
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .sage
+          git commit -m "chore: import SAGE @ ${{ github.event.inputs.sage_ref }}" || echo "No changes to commit"
+          git push
