@@ -1,0 +1,104 @@
+name: Sync SAGE
+
+on:
+  workflow_dispatch:
+    inputs:
+      sage_ref:
+        description: "SAGE ref to import (branch, tag, or commit)"
+        required: false
+        default: "main"
+  schedule:
+    - cron: "0 8 * * 1"
+  push:
+    paths:
+      - ".github/workflows/sync-sage.yml"
+      - "governance.yaml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-sage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Orion
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve SAGE ref
+        id: ref
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          INPUT_REF="${{ github.event.inputs.sage_ref || '' }}"
+          RESOLVED_REF=""
+
+          if [ -n "$INPUT_REF" ]; then
+            RESOLVED_REF="$INPUT_REF"
+          elif [ -f governance.yaml ]; then
+            RESOLVED_REF="$(
+              awk '
+                BEGIN {in_sage=0}
+                /^sage:/ {in_sage=1; next}
+                in_sage && /^[^[:space:]]/ {in_sage=0}
+                in_sage && /^[[:space:]]+ref:/ {
+                  gsub(/"/, "", $2)
+                  print $2
+                  exit
+                }
+              ' governance.yaml
+            )"
+          fi
+
+          if [ -z "$RESOLVED_REF" ]; then
+            RESOLVED_REF="main"
+          fi
+
+          echo "value=$RESOLVED_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Clone SAGE
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAGE_URL="${SAGE_URL:-https://github.com/LeGoatest/SAGE}"
+          SAGE_REF="${{ steps.ref.outputs.value }}"
+
+          rm -rf .sage
+          git clone --depth 1 --branch "$SAGE_REF" "$SAGE_URL" .sage || {
+            git clone "$SAGE_URL" .sage
+            git -C .sage fetch --all --tags
+            git -C .sage checkout "$SAGE_REF"
+          }
+
+      - name: Prepare workspace dirs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .jtasks
+          mkdir -p .sage/runtime
+          mkdir -p .sage/cache
+
+      - name: Commit changes
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .sage .jtasks
+
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "chore(sage): sync SAGE @ ${{ steps.ref.outputs.value }}"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
