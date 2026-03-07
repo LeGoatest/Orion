@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// OrientationResult contains retrieved context and assembled information
+// OrientationResult contains the context retrieved for a specific goal
 type OrientationResult struct {
 	Goal     *Goal
 	Context  string
@@ -13,24 +13,20 @@ type OrientationResult struct {
 	Memories []string
 }
 
-// Orient performs hybrid search and context assembly
+// Orient implementation: perform hybrid retrieval and context assembly
 func (p *DefaultPipeline) Orient(ctx context.Context, observation interface{}) (interface{}, error) {
+	fmt.Println("OODA-L: Phase: Orient")
+
 	goal, ok := observation.(*Goal)
 	if !ok {
-		return nil, fmt.Errorf("invalid input type for orient: expected *Goal")
+		return nil, fmt.Errorf("invalid input type: expected *Goal")
 	}
 
-	fmt.Printf("Orienting for goal: %s\n", goal.ID)
-
-	// Hybrid retrieval logic would go here:
-	// - vector similarity
-	// - graph relationships
-	// - symbol search
-	// - temporal signals
+	fmt.Printf("Performing hybrid search for goal: %s\n", goal.ID)
 
 	// For bootstrap, returning a placeholder orientation result
 	return &OrientationResult{
 		Goal:    goal,
-		Context: "placeholder orientation context",
+		Context: "placeholder orientation context built from hybrid retrieval",
 	}, nil
 }

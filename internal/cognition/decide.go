@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// DecisionPlan represents an execution plan
+// DecisionPlan represents an execution plan generated from orientation context
 type DecisionPlan struct {
 	GoalID    string
 	Steps     []PlanStep
@@ -20,30 +20,32 @@ type PlanStep struct {
 	Input       interface{}
 }
 
-// Decide constructs an execution plan using rule-based logic
+// Decide implementation: deterministic execution planning
 func (p *DefaultPipeline) Decide(ctx context.Context, orientation interface{}) (interface{}, error) {
+	fmt.Println("OODA-L: Phase: Decide")
+
 	orientationResult, ok := orientation.(*OrientationResult)
 	if !ok {
-		return nil, fmt.Errorf("invalid input type for decide: expected *OrientationResult")
+		return nil, fmt.Errorf("invalid input type: expected *OrientationResult")
 	}
 
-	fmt.Printf("Deciding execution plan for goal: %s\n", orientationResult.Goal.ID)
+	fmt.Printf("Generating execution plan for goal: %s\n", orientationResult.Goal.ID)
 
-	// Deterministic rule-based decider:
-	// - convert goal -> execution plan
-	// - select tools
-	// - generate ordered plan steps
+	// Decision logic:
+	// 1. Analyze orientation context to select tools
+	// 2. Break down goal into sequential steps
+	// 3. Optional LLM reasoning step (but must work without it)
 
 	// For bootstrap, a very simple set of steps
 	plan := &DecisionPlan{
 		GoalID:    orientationResult.Goal.ID,
-		Reasoning: "deterministic placeholder reasoning",
+		Reasoning: "deterministic rule-based decision",
 		Steps: []PlanStep{
 			{
 				ID:          "step-1",
-				Description: "placeholder step description",
-				ToolName:    "placeholder-tool",
-				Input:       "placeholder-input",
+				Description: "placeholder tool execution step",
+				ToolName:    "shell",
+				Input:       "echo 'executing goal: " + orientationResult.Goal.ID + "'",
 			},
 		},
 	}

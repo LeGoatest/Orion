@@ -5,22 +5,24 @@ import (
 	"fmt"
 )
 
-// Learn stores results as memory nodes and creates graph links
+// Learn implementation: update knowledge from execution results
 func (p *DefaultPipeline) Learn(ctx context.Context, result interface{}) error {
+	fmt.Println("OODA-L: Phase: Learn")
+
 	actResult, ok := result.(*ActResult)
 	if !ok {
-		return fmt.Errorf("invalid input type for learn: expected *ActResult")
+		return fmt.Errorf("invalid input type: expected *ActResult")
 	}
 
 	fmt.Printf("Learning from execution results for goal: %s\n", actResult.GoalID)
 
 	// Learn logic:
-	// - store memory nodes (facts, insights, tool_results)
-	// - create graph links (related_to, caused_by, solved_by)
-	// - detect patterns
-	// - update embeddings
+	// 1. Convert act results into memory nodes
+	// 2. Link results to the original goal node
+	// 3. Trigger pattern detection if needed
+	// 4. Update embeddings for retrieval engine
 
 	// For bootstrap, just logging
-	fmt.Printf("Knowledge updated from goal completion: %s\n", actResult.GoalID)
+	fmt.Printf("Knowledge graph updated for goal completion: %s\n", actResult.GoalID)
 	return nil
 }

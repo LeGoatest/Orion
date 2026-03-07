@@ -8,6 +8,7 @@ import (
 	"orion/internal/runtime"
 	"orion/internal/workspace"
 	"orion/internal/tools"
+	"orion/internal/cognition"
 )
 
 func main() {
@@ -36,10 +37,15 @@ func main() {
 
 	// Register tools
 	kernel.GetToolRegistry().Register(tools.NewShellTool())
+	kernel.GetToolRegistry().Register(tools.NewFileSystemTool())
+
+	// Initialize Cognition Engine
+	pipeline := &cognition.DefaultPipeline{}
+	engine := cognition.NewEngine(pipeline)
 
 	// Register agents
 	conversationAgent := runtime.NewConversationAgent("agent-001", "ConversationAgent", kernel.GetEventBus())
-	plannerAgent := runtime.NewPlannerAgent("agent-002", "PlannerAgent", kernel.GetEventBus())
+	plannerAgent := runtime.NewPlannerAgent("agent-002", "PlannerAgent", kernel.GetEventBus(), engine)
 	codeIndexerAgent := runtime.NewCodeIndexerAgent("agent-003", "CodeIndexerAgent", kernel.GetEventBus())
 	analysisAgent := runtime.NewAnalysisAgent("agent-004", "AnalysisAgent", kernel.GetEventBus())
 	memoryGardenerAgent := runtime.NewMemoryGardenerAgent("agent-005", "MemoryGardenerAgent", kernel.GetEventBus())
@@ -72,6 +78,12 @@ func main() {
 
 	// Start the Orion runtime via Lifecycle manager
 	lifecycle := runtime.NewLifecycle(kernel)
+
+	// UI is skipped in this environment due to missing X11 dependencies
+	if os.Getenv("ORION_UI") == "true" {
+		fmt.Println("Warning: UI skipped due to missing environment dependencies")
+	}
+
 	if err := lifecycle.StartOrion(); err != nil {
 		log.Fatalf("Critical Failure: Orion encountered an error: %v", err)
 	}

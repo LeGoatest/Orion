@@ -12,6 +12,20 @@ type Tool interface {
 	Execute(ctx context.Context, input interface{}) (interface{}, error)
 }
 
+// BaseTool provides common functionality for tools
+type BaseTool struct {
+	name        string
+	description string
+}
+
+func (t *BaseTool) Name() string {
+	return t.name
+}
+
+func (t *BaseTool) Description() string {
+	return t.description
+}
+
 // Registry maintains a set of registered tools
 type Registry struct {
 	mu    sync.RWMutex

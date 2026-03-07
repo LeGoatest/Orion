@@ -8,35 +8,31 @@ import (
 	"github.com/google/uuid"
 )
 
-// Goal represents a user intent or sub-task
+// Goal represents a minimal goal structure for the cognition package to avoid import cycle
 type Goal struct {
 	ID          string
 	Description string
 	Status      string
-	Priority    int
 	CreatedAt   time.Time
 }
 
-// Observe captures user intent and creates a user_goal memory node
+// Observe implementation
 func (p *DefaultPipeline) Observe(ctx context.Context, input interface{}) (interface{}, error) {
-	fmt.Println("Observing user intent...")
+	fmt.Println("OODA-L: Phase: Observe")
 
 	intent, ok := input.(string)
 	if !ok {
-		return nil, fmt.Errorf("invalid input type for observe: expected string")
+		return nil, fmt.Errorf("invalid input type: expected string")
 	}
 
 	goal := &Goal{
 		ID:          uuid.New().String(),
 		Description: intent,
 		Status:      "pending",
-		Priority:    0,
 		CreatedAt:   time.Now(),
 	}
 
-	// In a real implementation, this would be persisted to the database
-	// and an 'observe' event would be emitted to the event bus.
-	fmt.Printf("Goal created: %s (%s)\n", goal.Description, goal.ID)
+	fmt.Printf("User intent captured: %s (%s)\n", goal.Description, goal.ID)
 
 	return goal, nil
 }

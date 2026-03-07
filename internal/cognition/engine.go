@@ -2,10 +2,6 @@ package cognition
 
 import (
 	"context"
-	"fmt"
-	"time"
-
-	"orion/internal/runtime"
 )
 
 // OODALPipeline represents the cognitive loop phases
@@ -20,56 +16,49 @@ type OODALPipeline interface {
 // Engine drives the OODA-L cognitive loop
 type Engine struct {
 	pipeline OODALPipeline
-	eventBus *runtime.EventBus
 }
 
 // NewEngine creates a new Engine
-func NewEngine(pipeline OODALPipeline, eventBus *runtime.EventBus) *Engine {
+func NewEngine(pipeline OODALPipeline) *Engine {
 	return &Engine{
 		pipeline: pipeline,
-		eventBus: eventBus,
 	}
 }
 
 // Process runs a single iteration of the OODA-L loop
 func (e *Engine) Process(ctx context.Context, input interface{}) error {
-	fmt.Println("Starting OODA-L iteration")
-
 	// Observe
 	observation, err := e.pipeline.Observe(ctx, input)
 	if err != nil {
-		return fmt.Errorf("observe failed: %w", err)
+		return err
 	}
 
 	// Orient
 	orientation, err := e.pipeline.Orient(ctx, observation)
 	if err != nil {
-		return fmt.Errorf("orient failed: %w", err)
+		return err
 	}
 
 	// Decide
 	decision, err := e.pipeline.Decide(ctx, orientation)
 	if err != nil {
-		return fmt.Errorf("decide failed: %w", err)
+		return err
 	}
 
 	// Act
 	result, err := e.pipeline.Act(ctx, decision)
 	if err != nil {
-		return fmt.Errorf("act failed: %w", err)
+		return err
 	}
 
 	// Learn
 	err = e.pipeline.Learn(ctx, result)
 	if err != nil {
-		return fmt.Errorf("learn failed: %w", err)
+		return err
 	}
 
-	fmt.Println("OODA-L iteration completed")
 	return nil
 }
 
 // DefaultPipeline provides a basic implementation of the OODA-L loop
-type DefaultPipeline struct {
-	// Subsystems will be injected here
-}
+type DefaultPipeline struct{}
