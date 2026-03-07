@@ -1,0 +1,8 @@
+sage:
+  repo: https://github.com/LeGoatest/SAGE
+  ref: main
+
+project:
+  name: Orion
+  mode: deterministic
+  architecture: cognitive-data-orchestrator
