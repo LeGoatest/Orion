@@ -73,33 +73,3 @@ func (e *Engine) Process(ctx context.Context, input interface{}) error {
 type DefaultPipeline struct {
 	// Subsystems will be injected here
 }
-
-func (p *DefaultPipeline) Observe(ctx context.Context, input interface{}) (interface{}, error) {
-	fmt.Println("Phase: Observe")
-	// For bootstrap, just pass input through or wrap it in an observation struct
-	return input, nil
-}
-
-func (p *DefaultPipeline) Orient(ctx context.Context, observation interface{}) (interface{}, error) {
-	fmt.Println("Phase: Orient")
-	// Hybrid retrieval logic would go here
-	return observation, nil
-}
-
-func (p *DefaultPipeline) Decide(ctx context.Context, orientation interface{}) (interface{}, error) {
-	fmt.Println("Phase: Decide")
-	// Deterministic decider logic would go here
-	return orientation, nil
-}
-
-func (p *DefaultPipeline) Act(ctx context.Context, decision interface{}) (interface{}, error) {
-	fmt.Println("Phase: Act")
-	// Tool execution logic would go here
-	return decision, nil
-}
-
-func (p *DefaultPipeline) Learn(ctx context.Context, result interface{}) error {
-	fmt.Println("Phase: Learn")
-	// Memory storage and pattern detection logic would go here
-	return nil
-}

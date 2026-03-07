@@ -185,12 +185,18 @@ func InitializeDB(dbPath string, schema string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to initialize schema: %w", err)
 	}
 
+	// For workspace DBs, ensure vector table is setup
+	if schema == WorkspaceDBSchema {
+		if err := SetupVectorTable(db); err != nil {
+			fmt.Printf("Warning: failed to setup vector table (missing sqlite_vec extension?): %v\n", err)
+		}
+	}
+
 	return db, nil
 }
 
 // SetupVectorTable initializes the sqlite_vec virtual table for embeddings.
 func SetupVectorTable(db *sql.DB) error {
-	// Example sqlite_vec initialization
 	_, err := db.Exec(`CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(
 	    id TEXT PRIMARY KEY,
 	    embedding FLOAT32[1536]
