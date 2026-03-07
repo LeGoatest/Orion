@@ -1,3 +1,4 @@
+# .github/workflows/sync-sage.yml
 name: Sync SAGE
 
 on:
@@ -35,6 +36,115 @@ jobs:
           set -euo pipefail
 
           INPUT_REF="${{ github.event.inputs.sage_ref || '' }}"
+          RESOLVED_REF=""
+
+          if [ -n "$INPUT_REF" ]; then
+            RESOLVED_REF="$INPUT_REF"
+          elif [ -f governance.yaml ]; then
+            RESOLVED_REF="$(
+              awk '
+                BEGIN {in_sage=0}
+                /^sage:/ {in_sage=1; next}
+                in_sage && /^[^[:space:]]/ {in_sage=0}
+                in_sage && /^[[:space:]]+ref:/ {
+                  gsub(/"/, "", $2)
+                  print $2
+                  exit
+                }
+              ' governance.yaml
+            )"
+          fi
+
+          if [ -z "$RESOLVED_REF" ]; then
+            RESOLVED_REF="main"
+          fi
+
+          echo "value=$RESOLVED_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve SAGE repo
+        id: repo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RESOLVED_REPO="https://github.com/LeGoatest/SAGE"
+
+          if [ -f governance.yaml ]; then
+            GOV_REPO="$(
+              awk '
+                BEGIN {in_sage=0}
+                /^sage:/ {in_sage=1; next}
+                in_sage && /^[^[:space:]]/ {in_sage=0}
+                in_sage && /^[[:space:]]+repo:/ {
+                  gsub(/"/, "", $2)
+                  print $2
+                  exit
+                }
+              ' governance.yaml
+            )"
+            if [ -n "${GOV_REPO:-}" ]; then
+              RESOLVED_REPO="$GOV_REPO"
+            fi
+          fi
+
+          echo "value=$RESOLVED_REPO" >> "$GITHUB_OUTPUT"
+
+      - name: Import SAGE as plain files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAGE_URL="${{ steps.repo.outputs.value }}"
+          SAGE_REF="${{ steps.ref.outputs.value }}"
+
+          rm -rf .sage .sage.tmp
+          git clone --depth 1 --branch "$SAGE_REF" "$SAGE_URL" .sage.tmp || {
+            git clone "$SAGE_URL" .sage.tmp
+            git -C .sage.tmp fetch --all --tags
+            git -C .sage.tmp checkout "$SAGE_REF"
+          }
+
+          rm -rf .sage.tmp/.git
+          mv .sage.tmp .sage
+
+          mkdir -p .jtasks
+          mkdir -p .sage/runtime
+          mkdir -p .sage/cache
+
+          cat > .sage/README.md <<EOF
+          # SAGE Import
+
+          This directory contains imported SAGE governance files synced from:
+          $SAGE_URL
+
+          Ref:
+          $SAGE_REF
+
+          Notes:
+          - .sage is stored as plain files
+          - .sage/.git is removed intentionally
+          - .sage/runtime and .sage/cache are local runtime paths
+          EOF
+
+      - name: Commit changes
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .sage .jtasks governance.yaml .gitignore
+
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "chore(sage): sync SAGE @ ${{ steps.ref.outputs.value }}"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"          INPUT_REF="${{ github.event.inputs.sage_ref || '' }}"
           RESOLVED_REF=""
 
           if [ -n "$INPUT_REF" ]; then
