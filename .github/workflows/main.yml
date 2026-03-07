@@ -1,0 +1,5 @@
+git rm --cached .sage
+rm -rf .sage .gitmodules
+git add .gitignore governance.yaml .github/workflows/sync-sage.yml
+git commit -m "fix: remove broken .sage gitlink"
+git push
