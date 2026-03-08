@@ -2,7 +2,6 @@ package parser
 
 import (
 	"context"
-	"fmt"
 	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/smacker/go-tree-sitter/golang"
 )

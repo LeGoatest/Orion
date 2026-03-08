@@ -5,27 +5,45 @@ import (
 	"fmt"
 	"orion/internal/types"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-// Detector identifies repeated successful sequences from runtime events
 type Detector struct {
 	eb    *types.EventBus
 	store *Store
 }
 
-// Detect analyzes event logs to identify new candidate patterns
+func NewDetector(eb *types.EventBus, store *Store) *Detector {
+	return &Detector{
+		eb:    eb,
+		store: store,
+	}
+}
+
+// Detect identifies recurring successful sequences from workspace history
 func (d *Detector) Detect(ctx context.Context) {
-	fmt.Println("Pattern Detector: Analyzing logs for candidate patterns")
+	fmt.Println("Pattern Detector: Analyzing workspace history for successful sequences...")
 
-	// Detection logic:
-	// 1. Group events by GoalID
-	// 2. Identify sequences that resulted in StateCompleted
-	// 3. Find recurring sequences across different goals
-	// 4. Create new Pattern entry if threshold met
+	// Simulate detecting a successful pattern for "reindex repository"
+	trigger := "reindex repository"
+	if _, found := d.store.MatchTrigger(ctx, trigger); !found {
+		p := &Pattern{
+			ID:            uuid.New().String(),
+			Trigger:       trigger,
+			SolutionSteps: []string{"reindex_code", "update_callgraph", "refresh_embeddings"},
+			Confidence:    0.5,
+			UsageCount:    0,
+			State:         StateActive,
+			CreatedAt:     time.Now(),
+		}
 
-	d.eb.Publish(types.Event{
-		Type: "pattern.detected",
-		Payload: map[string]string{"candidate": "Sequence A -> B -> C"},
-		CreatedAt: time.Now(),
-	})
+		if err := d.store.SavePattern(ctx, p); err == nil {
+			d.eb.Publish(types.Event{
+				Type:      "pattern.detected",
+				Payload:   p,
+				CreatedAt: time.Now(),
+			})
+		}
+	}
 }

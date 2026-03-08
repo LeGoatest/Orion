@@ -2,35 +2,49 @@ package pattern
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+	"strings"
 )
 
-// Pattern represents a reusable problem-solution structure
-type Pattern struct {
-	ID            string
-	Trigger       string
-	SolutionSteps []string
-	Confidence    float64
-	UsageCount    int
-}
-
-// Store handles persistence of patterns in the workspace database
 type Store struct {
-	db interface {
-		ExecContext(ctx context.Context, query string, args ...interface{}) (interface{}, error)
-		QueryContext(ctx context.Context, query string, args ...interface{}) (interface{}, error)
-	}
+	db *sql.DB
 }
 
-// MatchTrigger searches the patterns table for a matching trigger
+func NewStore(db *sql.DB) *Store {
+	return &Store{db: db}
+}
+
+// MatchTrigger searches for a pattern trigger that matches the input goal
 func (s *Store) MatchTrigger(ctx context.Context, goal string) (*Pattern, bool) {
-	// SELECT * FROM patterns WHERE trigger MATCH ?
-	return nil, false
+	query := `SELECT id, trigger, solution_steps, confidence, usage_count, state FROM patterns WHERE ? LIKE '%' || trigger || '%'`
+	row := s.db.QueryRowContext(ctx, query, goal)
+
+	var p Pattern
+	var stepsJSON string
+	err := row.Scan(&p.ID, &p.Trigger, &stepsJSON, &p.Confidence, &p.UsageCount, &p.State)
+	if err != nil {
+		return nil, false
+	}
+
+	// Unmarshal solution steps
+	steps := strings.Split(stepsJSON, ",")
+	p.SolutionSteps = steps
+
+	return &p, true
 }
 
-// IncrementUsage updates the usage counter for a pattern
+// SavePattern persists a new pattern to the database
+func (s *Store) SavePattern(ctx context.Context, p *Pattern) error {
+	stepsJSON := strings.Join(p.SolutionSteps, ",")
+	query := `INSERT INTO patterns (id, trigger, solution_steps, confidence, usage_count, state)
+              VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := s.db.ExecContext(ctx, query, p.ID, p.Trigger, stepsJSON, p.Confidence, p.UsageCount, p.State)
+	return err
+}
+
+// IncrementUsage updates statistics for a matched pattern
 func (s *Store) IncrementUsage(ctx context.Context, id string) error {
-	fmt.Printf("Updating usage count for pattern: %s\n", id)
-	// UPDATE patterns SET usage_count = usage_count + 1 WHERE id = ?
-	return nil
+	query := `UPDATE patterns SET usage_count = usage_count + 1, confidence = MIN(1.0, confidence + 0.05) WHERE id = ?`
+	_, err := s.db.ExecContext(ctx, query, id)
+	return err
 }

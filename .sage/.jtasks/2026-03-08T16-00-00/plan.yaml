@@ -1,0 +1,13 @@
+steps:
+  - id: step-1-pattern
+    description: Implement Pattern Engine
+    files: [internal/pattern/engine.go, internal/pattern/detector.go, internal/pattern/matcher.go, internal/pattern/store.go, internal/pattern/confidence.go]
+  - id: step-2-graph
+    description: Implement Retrieval Graph Expansion
+    files: [internal/retrieval/graph/expand.go, internal/retrieval/graph/traversal.go, internal/retrieval/graph/ranking.go]
+  - id: step-3-symbols
+    description: Implement Symbolic Index
+    files: [internal/symbols/index.go, internal/symbols/store.go, internal/symbols/query.go, internal/symbols/extract.go]
+  - id: step-4-integration
+    description: Integrate all systems
+    files: [internal/cognition/engine.go, internal/retrieval/engine.go, internal/storage/sqlite/db.go]

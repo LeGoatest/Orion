@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+
 	"orion/internal/runtime"
+	"orion/internal/runtime/goal"
 )
 
 func main() {
 	fmt.Println("#########################################")
-	fmt.Println("# Orion Cognitive Runtime - Bootstrapping #")
+	fmt.Println("# Orion Cognitive Runtime - Start #")
 	fmt.Println("#########################################")
 
 	// Determine data directory
@@ -17,22 +20,34 @@ func main() {
 		dataDir = "data"
 	}
 
-	// Initialize the Kernel
+	// 1. Initialize the Kernel (wires up all cognitive subsystems)
 	kernel, err := runtime.NewKernel(dataDir)
 	if err != nil {
-		fmt.Printf("Critical Failure: failed to initialize kernel: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Critical Failure: failed to initialize kernel: %v", err)
 	}
 
-	// Start kernel
+	// 2. Start kernel
 	if err := kernel.Start(); err != nil {
-		fmt.Printf("Critical Failure: failed to start kernel: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Critical Failure: failed to start kernel: %v", err)
+	}
+
+	// 3. Simulate a goal being processed
+	ctx := kernel.Context()
+	testGoal := &goal.Goal{
+		ID:          "goal-001",
+		Description: "Analyze the current repository for patterns",
+	}
+
+	fmt.Printf("Submitting Test Goal: %s\n", testGoal.Description)
+	if err := kernel.GetCognition().Process(ctx, testGoal); err != nil {
+		fmt.Printf("Goal processing failed: %v\n", err)
 	}
 
 	fmt.Println("Orion Cognitive Runtime is running.")
 
-	// In a Wails environment, the Wails application would be started here.
-	// For this phase, we keep the process alive to simulate the runtime.
-	select {}
+	// For simulation, we stay alive
+	select {
+	case <-ctx.Done():
+		fmt.Println("Runtime terminated.")
+	}
 }

@@ -1,0 +1,16 @@
+design:
+  pattern_engine:
+    package: internal/pattern/
+    components: [engine, detector, matcher, store, confidence]
+    interactions: [goal_runtime, cognition_engine]
+  graph_expansion:
+    package: internal/retrieval/graph/
+    components: [expand, traversal, ranking]
+    interactions: [retrieval_engine, memory_graph]
+  symbolic_index:
+    package: internal/symbols/
+    components: [index, store, query, extract]
+    interactions: [code_parser, code_indexer, retrieval_engine]
+  storage:
+    table: symbols
+    columns: [id, name, type, file_path, start_line, end_line, workspace_id, metadata, created_at]

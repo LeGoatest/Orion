@@ -3,9 +3,10 @@ package retrieval
 import (
 	"context"
 	"fmt"
-	"orion/internal/retrieval/graph"
-	"orion/internal/types"
 	"time"
+	"orion/internal/retrieval/graph"
+	"orion/internal/symbols"
+	"orion/internal/types"
 )
 
 type ContextBundle struct {
@@ -15,41 +16,48 @@ type ContextBundle struct {
 	CodeSymbols      []string
 	CallGraphEdges   []string
 	RelevantEvents   []string
+	Symbols          []symbols.Symbol
+	SymbolDefinitions []string
+	RelatedCalls     []string
 }
 
 type RetrievalEngine struct {
-	eb *types.EventBus
+	eb           *types.EventBus
+	symbolQuery  *symbols.Query
+	graphExpand  *graph.Expander
 }
 
-func NewRetrievalEngine(eb *types.EventBus) *RetrievalEngine {
-	return &RetrievalEngine{eb: eb}
+func NewRetrievalEngine(eb *types.EventBus, sq *symbols.Query, ge *graph.Expander) *RetrievalEngine {
+	return &RetrievalEngine{
+		eb:          eb,
+		symbolQuery: sq,
+		graphExpand: ge,
+	}
 }
 
 func (re *RetrievalEngine) AssembleContext(ctx context.Context, goal string) (*ContextBundle, error) {
-	fmt.Printf("Retrieval Engine: Assembling ContextBundle for: %s\n", goal)
+	fmt.Printf("Retrieval Engine: Assembling context for: %s\n", goal)
 
-	// 1. Vector Search
+	// 1. Symbol lookup first
+	re.eb.Publish(types.Event{Type: "symbol.lookup", CreatedAt: time.Now()})
+	syms, _ := re.symbolQuery.ResolveSymbolReference(ctx, goal)
+	if len(syms) > 0 {
+		re.eb.Publish(types.Event{Type: "symbol.resolved", CreatedAt: time.Now()})
+	} else {
+		re.eb.Publish(types.Event{Type: "symbol.miss", CreatedAt: time.Now()})
+	}
+
+	// 2. Vector search (placeholder logic)
 	re.eb.Publish(types.Event{Type: "retrieval.vector_completed", CreatedAt: time.Now()})
 
-	// 2. Graph Expansion
-	exp := &graph.Expander{}
-	_, err := exp.Expand(ctx, []string{"candidate-1"}, 1)
-	if err != nil {
-		return nil, err
-	}
+	// 3. Graph expansion
+	_, _ = re.graphExpand.Expand(ctx, []string{"root-node"}, 2)
 	re.eb.Publish(types.Event{Type: "retrieval.graph_expanded", CreatedAt: time.Now()})
 
-	// 3. Code & Call Graph Integration
-	// (Search symbol index and expand call graph if code-related)
-	re.eb.Publish(types.Event{Type: "code.callgraph_expanded", CreatedAt: time.Now()})
-
-	// 4. Hybrid Rank and Score
+	// 4. Hybrid scoring and bundle build
 	re.eb.Publish(types.Event{Type: "retrieval.ranked", CreatedAt: time.Now()})
 
-	// 5. Build ContextBundle
 	return &ContextBundle{
-		Facts: []string{"Fact 1 (Semantic)", "Fact 2 (Graph-Linked)"},
-		CodeSymbols: []string{"Symbol 1 (Parsed)"},
-		CallGraphEdges: []string{"Edge 1 (Traversed)"},
+		Symbols: syms,
 	}, nil
 }

@@ -2,13 +2,29 @@ package pattern
 
 import (
 	"context"
-	"fmt"
 	"sync"
-	"orion/internal/types"
 	"time"
+	"orion/internal/types"
 )
 
-// Engine manages the lifecycle and usage of cognitive patterns
+type State string
+
+const (
+	StateActive   State = "active"
+	StateDegraded State = "degraded"
+	StateArchived State = "archived"
+)
+
+type Pattern struct {
+	ID            string    `json:"id"`
+	Trigger       string    `json:"trigger"`
+	SolutionSteps []string  `json:"solution_steps"`
+	Confidence    float64   `json:"confidence"`
+	UsageCount    int       `json:"usage_count"`
+	State         State     `json:"state"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
 type Engine struct {
 	mu         sync.RWMutex
 	store      *Store
@@ -24,30 +40,28 @@ func NewEngine(store *Store, eb *types.EventBus) *Engine {
 	}
 }
 
-// Match searches for a pattern trigger that matches the current goal context
 func (e *Engine) Match(ctx context.Context, goal string) (*Pattern, bool) {
-	fmt.Printf("Pattern Engine: Searching for trigger match for: %s\n", goal)
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	pattern, found := e.store.MatchTrigger(ctx, goal)
-	if found {
+	if found && pattern.Confidence > 0.8 {
 		e.eb.Publish(types.Event{
 			Type: "pattern.matched",
-			Payload: map[string]string{"pattern_id": pattern.ID},
+			Payload: pattern,
 			CreatedAt: time.Now(),
 		})
+		return pattern, true
 	}
-
-	return pattern, found
+	return nil, false
 }
 
-// RecordSuccess updates the pattern metrics after a successful execution
-func (e *Engine) RecordSuccess(ctx context.Context, patternID string) {
-	e.confidence.Increase(patternID)
-	e.store.IncrementUsage(ctx, patternID)
-
+func (e *Engine) ExecutePattern(ctx context.Context, pattern *Pattern) error {
 	e.eb.Publish(types.Event{
-		Type: "pattern.confidence_changed",
-		Payload: map[string]string{"pattern_id": patternID, "status": "increased"},
+		Type: "pattern.executed",
+		Payload: pattern.ID,
 		CreatedAt: time.Now(),
 	})
+	// Actual execution logic would go here, probably calling back into cognition
+	return nil
 }

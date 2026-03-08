@@ -1,0 +1,13 @@
+requirements:
+  - id: REQ-PATTERN-ENGINE
+    description: Implement a pattern engine to detect recurring successful goal execution patterns.
+    priority: HIGH
+  - id: REQ-GRAPH-EXPANSION
+    description: Extend retrieval with 1-hop and 2-hop memory_link expansion.
+    priority: HIGH
+  - id: REQ-SYMBOLIC-INDEX
+    description: Implement a deterministic symbolic index for code symbols (functions, structs, etc.).
+    priority: HIGH
+  - id: REQ-INTEGRATION
+    description: Integrate all systems into the OODA-L loop and retrieval pipeline.
+    priority: HIGH
