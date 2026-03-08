@@ -1,0 +1,16 @@
+steps:
+  - id: step-1-agent-refactor
+    description: Implement RetrievalAgent and ToolExecutionAgent. Update agents_impl.go.
+    files: [internal/agents/agents.go, internal/runtime/agents_impl.go]
+  - id: step-2-goal-model
+    description: Update goal and job models for stage tracking and persistence.
+    files: [internal/runtime/goal.go, internal/runtime/jobs.go]
+  - id: step-3-cognition-refactor
+    description: Refactor cognition engine for agent-driven dispatch.
+    files: [internal/cognition/cognition.go]
+  - id: step-4-dispatcher-wiring
+    description: Update dispatcher to map stages to capabilities and create jobs.
+    files: [internal/agents/agents.go]
+  - id: step-5-integration
+    description: Final main.go and kernel wiring.
+    files: [cmd/orion/main.go, internal/runtime/kernel.go]

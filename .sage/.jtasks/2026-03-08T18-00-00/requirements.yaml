@@ -1,0 +1,13 @@
+requirements:
+  - id: REQ-OPTIMIZED-PIPELINE
+    description: Introduce deterministic pre-resolution stages (symbols, patterns) before vector retrieval.
+    priority: HIGH
+  - id: REQ-CONCURRENT-STAGES
+    description: Execute pipeline stages concurrently where possible to improve performance.
+    priority: MEDIUM
+  - id: REQ-EXTENDED-GRAPH-EXPANSION
+    description: Include call graph edges in the retrieval graph expansion stage.
+    priority: HIGH
+  - id: REQ-PIPELINE-EVENTS
+    description: Emit specialized pipeline events for each resolution stage.
+    priority: HIGH

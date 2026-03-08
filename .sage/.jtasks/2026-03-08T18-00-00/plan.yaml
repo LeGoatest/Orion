@@ -1,0 +1,10 @@
+steps:
+  - id: step-1-cognition-update
+    description: Update Cognition Engine pipeline order
+    files: [internal/cognition/engine.go, internal/cognition/pipeline.go]
+  - id: step-2-retrieval-update
+    description: Optimize Retrieval Engine pipeline stages
+    files: [internal/retrieval/engine.go]
+  - id: step-3-events
+    description: Integrate pipeline events
+    files: [internal/retrieval/engine.go, internal/cognition/engine.go]

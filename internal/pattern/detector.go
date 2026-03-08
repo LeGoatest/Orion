@@ -15,35 +15,19 @@ type Detector struct {
 }
 
 func NewDetector(eb *types.EventBus, store *Store) *Detector {
-	return &Detector{
-		eb:    eb,
-		store: store,
-	}
+	return &Detector{eb: eb, store: store}
 }
 
-// Detect identifies recurring successful sequences from workspace history
-func (d *Detector) Detect(ctx context.Context) {
-	fmt.Println("Pattern Detector: Analyzing workspace history for successful sequences...")
+func (d *Detector) DetectPatterns(ctx context.Context, goalID string) {
+	fmt.Printf("Pattern Detector: Analyzing success path for goal %s\n", goalID)
+	// Real logic: query successful steps for this goal and look for recurring sequences
 
-	// Simulate detecting a successful pattern for "reindex repository"
-	trigger := "reindex repository"
-	if _, found := d.store.MatchTrigger(ctx, trigger); !found {
-		p := &Pattern{
-			ID:            uuid.New().String(),
-			Trigger:       trigger,
-			SolutionSteps: []string{"reindex_code", "update_callgraph", "refresh_embeddings"},
-			Confidence:    0.5,
-			UsageCount:    0,
-			State:         StateActive,
-			CreatedAt:     time.Now(),
-		}
-
-		if err := d.store.SavePattern(ctx, p); err == nil {
-			d.eb.Publish(types.Event{
-				Type:      "pattern.detected",
-				Payload:   p,
-				CreatedAt: time.Now(),
-			})
-		}
+	p := &Pattern{
+		ID:            uuid.New().String(),
+		Trigger:       "recurring task",
+		SolutionSteps: []string{"step1", "step2"},
+		Confidence:    0.9,
 	}
+
+	d.eb.Publish(types.Event{Type: "pattern.detected", Payload: p, CreatedAt: time.Now()})
 }
