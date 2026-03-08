@@ -1,0 +1,15 @@
+design:
+  pipeline_flow:
+    orient: [symbol_lookup, pattern_match, embedding, vector_retrieval, graph_expansion, hybrid_scoring]
+  concurrency:
+    vector_search_and_graph_expansion: concurrent
+  integration:
+    cognition: internal/cognition/engine.go
+    retrieval: internal/retrieval/engine.go
+    pattern: internal/pattern/engine.go
+  events:
+    - pipeline.symbol_lookup
+    - pipeline.pattern_match
+    - pipeline.vector_search
+    - pipeline.graph_expand
+    - pipeline.context_built

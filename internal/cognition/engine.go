@@ -28,36 +28,42 @@ func NewCognitionEngine(pipeline OODALPipeline, eb *types.EventBus, re *retrieva
 }
 
 func (ce *CognitionEngine) Process(ctx context.Context, g *goal.Goal) error {
-	fmt.Printf("CognitionEngine: Starting OODA-L-G loop for goal %s\n", g.ID)
+	fmt.Printf("CognitionEngine: Starting Optimized OODA-L loop for goal %s\n", g.ID)
 
-	// OBSERVE
+	// 1. OBSERVE
 	obs, err := ce.pipeline.Observe(ctx, g.Description)
 	if err != nil { return err }
 	ce.eventBus.Publish(types.Event{Type: "observation_recorded", Payload: obs, CreatedAt: time.Now()})
 
-	// ORIENT
-	bundle, err := ce.retrieval.AssembleContext(ctx, g.Description)
-	if err != nil { return err }
+	// 2. ORIENT (Optimized Pipeline)
+	// Phase 2a: Symbol Lookup & Pattern Matching occur inside RetrievalEngine.AssembleContext
+	// or are orchestrated here. According to specs, Orient stage flow is:
+	// symbol lookup -> pattern match -> embedding -> vector retrieval -> graph expansion -> hybrid scoring
 
-	// PATTERN MATCH - Bypasses DECIDE if strong match found
+	// We perform Pattern Match here for potential DECIDE bypass.
+	ce.eventBus.Publish(types.Event{Type: "pipeline.pattern_match", CreatedAt: time.Now()})
 	if p, found := ce.patternEngine.Match(ctx, g.Description); found {
 		fmt.Printf("Cognition: Strong pattern match found! Bypassing complex planning for pattern: %s\n", p.ID)
+		ce.eventBus.Publish(types.Event{Type: "pipeline.pattern_match_success", Payload: p.ID, CreatedAt: time.Now()})
 		return ce.patternEngine.ExecutePattern(ctx, p)
 	}
 
-	// DECIDE
+	bundle, err := ce.retrieval.AssembleContext(ctx, g.Description)
+	if err != nil { return err }
+
+	// 3. DECIDE
 	decision, err := ce.pipeline.Decide(ctx, bundle)
 	if err != nil { return err }
 
-	// ACT
+	// 4. ACT
 	result, err := ce.pipeline.Act(ctx, decision)
 	if err != nil { return err }
 	ce.eventBus.Publish(types.Event{Type: "tool_executed", Payload: result, CreatedAt: time.Now()})
 
-	// LEARN
+	// 5. LEARN
 	if err := ce.pipeline.Learn(ctx, result); err != nil { return err }
 
-	// GARDEN
+	// 6. GARDEN
 	if err := ce.pipeline.Garden(ctx, g.ID); err != nil { return err }
 
 	return nil
