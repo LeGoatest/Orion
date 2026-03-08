@@ -1,4 +1,4 @@
-# Orion — Memory Operating System for AI Agents
+# Orion — Cognitive Runtime for AI Agents
 
 <!-- TODO: Add Logo -->
 
@@ -8,145 +8,70 @@
 
 ---
 
-Orion is a **memory operating system for AI agents and LLM applications**.
+Orion is a **local cognitive runtime for AI agents** that implements an OODA-L cognition loop, workspace-scoped knowledge orchestration, and autonomous tool execution.
 
-It provides **persistent memory, contextual retrieval, and knowledge orchestration** so AI systems can operate with long-term knowledge instead of stateless prompts.
-
-Orion sits **between the user and the language model**, acting as the **cognitive layer** that decides what context the model should actually see.
+It serves as the **cognitive layer** for agents, managing long-term memory, performing contextual retrieval, and constructing prompt envelopes for LLMs.
 
 ---
 
-# Why Orion
+# Core Philosophy
 
-Most LLM systems operate with **stateless context windows**.
+Orion treats agent memory as a **structured knowledge graph**, not just a collection of chat logs.
 
-Even systems that add memory usually rely on:
-
-- raw chat logs
-- naive vector search
-- simple RAG pipelines
-
-These approaches treat memory like **document retrieval**, not **cognition**.
-
-Human memory works differently.
-
-Ideas, phrases, or concepts trigger recall through **associations**, not just keyword matching.
-
-Orion is designed to emulate this behavior by storing knowledge as **structured memory artifacts** that can be retrieved, linked, and maintained over time.
-
----
-
-# Core Idea
-
-Instead of storing conversations as a single transcript, Orion stores **discrete memory units**.
-
-Each memory unit contains structured information that can be retrieved later based on relevance, similarity, or relationships.
-
-Example memory structure:
-
-Memory ├─ timestamp ├─ conversation fragment ├─ semantic summary ├─ embedding vector ├─ tags └─ relationships
-
-These units form a **memory graph** rather than a linear conversation history.
-
-This enables:
-
-• associative recall  
-• semantic search  
-• timeline reconstruction  
-• contextual compression  
-
----
-
-# How Orion Works
-
-When a request enters the system, Orion retrieves relevant memories **before the LLM is invoked**.
-
-User Prompt │ ▼ Orion Memory Query │ ▼ Relevant Memories Retrieved │ ▼ Context Assembly │ ▼ Prompt Envelope │ ▼ LLM │ ▼ Response + Memory Update
-
-The LLM therefore receives **curated context**, not a raw conversation log.
-
-This improves:
-
-- reasoning continuity
-- long-term knowledge retention
-- prompt efficiency
-- agent coherence across sessions
+By implementing the **OODA-L** loop (Observe, Orient, Decide, Act, Learn), Orion transforms agents from stateless responders into persistent, learning entities.
 
 ---
 
 # Key Features
 
-### Persistent Memory
+### Local Multi-Agent Runtime
 
-Orion stores knowledge as structured memory artifacts instead of flat chat logs.
+Orion is a desktop application written in Go. It provides a robust, concurrent environment for multiple agents to operate within isolated workspaces.
 
-Each artifact may contain:
+### Workspace Isolation
 
-- conversation fragments
-- semantic summaries
-- embeddings
-- metadata
-- relational links
+Each workspace is a self-contained cognitive environment with its own SQLite database, memory graph, and data artifacts.
 
----
+### OODA-L Cognition Loop
 
-### Semantic Retrieval
+- **Observe**: Capture user intent and environmental signals.
+- **Orient**: Hybrid retrieval across vector space, knowledge graph, and code symbols.
+- **Decide**: Deterministic or LLM-based execution planning and tool selection.
+- **Act**: Safe execution of tools via a standardized framework.
+- **Learn**: Knowledge extraction, pattern detection, and memory consolidation.
 
-Orion retrieves context using **vector similarity and relationships between memories**, allowing agents to recall relevant knowledge across long time spans.
+### Memory Architecture
 
----
+Orion uses a **Zettelkasten-style memory graph** where nodes represent facts, insights, and events, linked by semantic and causal relationships.
 
-### Memory Gardening
+### Hybrid Retrieval Engine
 
-Long-running systems accumulate noise.
-
-Orion includes background processes that maintain memory quality by:
-
-• merging redundant memories  
-• summarizing long threads  
-• pruning irrelevant information  
-• reinforcing frequently accessed knowledge  
-
-This keeps the memory system **useful instead of bloated**.
-
----
-
-### Agent Workspaces
-
-Orion supports isolated **workspaces**.
-
-Each workspace can contain:
-
-- its own memory graph
-- knowledge sources
-- conversations
-- agent configuration
-
-This allows multiple agents or projects to operate independently.
+Retrieval combines:
+- **Vector Similarity** (via `sqlite_vec`)
+- **Graph Traversal**
+- **Code Symbol Search**
+- **Temporal & Importance Signals**
 
 ---
 
 # Architecture
 
-Orion is designed as a **lightweight backend service with a web interface and API**.
+Orion is built as a highly concurrent Go runtime kernel.
 
-High-level architecture:
+### Components
 
-User │ ▼ Orion ├─ Memory Engine ├─ Retrieval System ├─ Context Builder ├─ Agent Runtime └─ API + Web Interface │ ▼ LLM Provider
+- **Kernel**: Manages system lifecycle and service orchestration.
+- **Event Bus**: Asynchronous, persistent communication between agents.
+- **Worker Pool**: High-performance execution units for cognitive tasks.
+- **Workspace Manager**: Handles isolated data and runtime environments.
+- **Cognition Engine**: Implements the core OODA-L loop phases.
+- **Tool Registry**: Pluggable framework for agent capabilities.
 
-Typical implementation stack:
+### Storage Stack
 
-Backend
-
-- Go
-- SQLite
-- vector indexing
-
-Interface
-
-- HTMX
-- TailwindCSS
-- server-rendered templates
+- **Global Registry**: `data/orion.db` (workspaces, agents, system config).
+- **Workspace DB**: `data/workspaces/{id}/workspace.db` (memory, goals, code symbols).
+- **Vector Search**: Integrated `sqlite_vec` for high-performance embeddings.
 
 ---
 
