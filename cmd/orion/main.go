@@ -32,6 +32,7 @@ func main() {
 
 	fmt.Println("Orion Cognitive Runtime is running.")
 
-	// For bootstrap, keep running
+	// In a Wails environment, the Wails application would be started here.
+	// For this phase, we keep the process alive to simulate the runtime.
 	select {}
 }
