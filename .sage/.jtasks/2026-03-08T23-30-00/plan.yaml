@@ -1,0 +1,19 @@
+steps:
+  - id: step-1-agent-refactor
+    description: Implement missing agents and finalize stage capabilities.
+    files: [internal/agents/tool_executor.go, internal/runtime/agents_impl.go]
+  - id: step-2-pipeline-refactor
+    description: Refactor cognition engine and pipeline for agent dispatch.
+    files: [internal/cognition/engine.go, internal/cognition/pipeline.go]
+  - id: step-3-dispatcher-integration
+    description: Update dispatcher to track job completion and map stages.
+    files: [internal/agents/dispatcher.go]
+  - id: step-4-models-extension
+    description: Extend goal and job models for stage tracking and persistence.
+    files: [internal/runtime/goal/goal.go, internal/runtime/goal/jobs.go]
+  - id: step-5-events-integration
+    description: Implement handoff events and lifecycle notifications.
+    files: [internal/types/event_bus.go, internal/cognition/engine.go]
+  - id: step-6-final-integration
+    description: Finalize main.go and verify the coordinated runtime.
+    files: [cmd/orion/main.go]

@@ -1,0 +1,15 @@
+design:
+  agent_ownership:
+    ConversationAgent: [intake, output]
+    SymbolLookupAgent: [symbol_lookup]
+    PatternDetectorAgent: [pattern_match, background_analysis]
+    RetrievalAgent: [vector_retrieval, graph_expansion, hybrid_scoring]
+    PlannerAgent: [execution_planning]
+    ToolExecutionAgent: [act_stage]
+    MemoryGardenerAgent: [gardening, maintenance]
+    CodeIndexerAgent: [indexing]
+  pipeline_refactor:
+    central_engine: internal/cognition/engine.go (now handles dispatch logic)
+    stages: [Observe, SymbolLookup, PatternMatch, VectorRetrieval, GraphExpansion, Decide, DispatchAgents, Act, Learn, Garden]
+  event_flow:
+    chain: cognition.observe.completed -> symbol_lookup -> pattern -> retrieval -> plan -> act -> learn -> garden
