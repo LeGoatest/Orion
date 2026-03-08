@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"orion/internal/agents"
 	"orion/internal/cognition"
 	"orion/internal/execution/scheduler"
 	"orion/internal/execution/worker"
@@ -29,6 +30,9 @@ type Kernel struct {
 	cognition      *cognition.CognitionEngine
 	patternEngine  *pattern.Engine
 	retrieval      *retrieval.RetrievalEngine
+	agentRegistry  *agents.Registry
+	agentSupervisor *agents.Supervisor
+	agentDispatcher *agents.Dispatcher
 	ctx            context.Context
 	cancel         context.CancelFunc
 }
@@ -51,18 +55,20 @@ func NewKernel(dataDir string) (*Kernel, error) {
 	sch := scheduler.NewScheduler(eb, wp)
 	wm := NewWorkspaceManager(db, dataDir)
 
-	// 3. Cognitive subsystems (using global handles where appropriate)
-	// Note: In workspace isolation, many of these are re-initialized per workspace.
-	// For bootstrap, we wire up the structural foundation.
+	// 3. Multi-Agent Systems
+	ar := agents.NewRegistry()
+	as := agents.NewSupervisor(ar, eb)
+	ad := agents.NewDispatcher(ar, sch, eb)
 
-	ps := pattern.NewStore(db) // Use global for bootstrap or specific workspace db later
+	// 4. Cognitive subsystems
+	ps := pattern.NewStore(db)
 	pe := pattern.NewEngine(ps, eb)
 
 	ge := &graph.Expander{Db: db}
 	sq := &symbols.Query{Store: &symbols.Store{Db: db}}
 	re := retrieval.NewRetrievalEngine(eb, sq, ge)
 
-	ce := cognition.NewCognitionEngine(&cognition.DefaultPipeline{}, eb, re, pe)
+	ce := cognition.NewCognitionEngine(&cognition.DefaultPipeline{}, eb, re, pe, ad)
 
 	return &Kernel{
 		globalDB:      db,
@@ -73,6 +79,9 @@ func NewKernel(dataDir string) (*Kernel, error) {
 		cognition:     ce,
 		patternEngine: pe,
 		retrieval:     re,
+		agentRegistry: ar,
+		agentSupervisor: as,
+		agentDispatcher: ad,
 		ctx:           ctx,
 		cancel:        cancel,
 	}, nil
@@ -88,9 +97,15 @@ func (k *Kernel) Start() error {
 	k.workerPool.Start(k.ctx)
 	k.scheduler.Start(k.ctx)
 
+	// Start Agents
+	if err := k.agentSupervisor.StartAgents(k.ctx); err != nil {
+		return fmt.Errorf("failed to start agents: %w", err)
+	}
+
 	fmt.Println("Cognition Engine: READY")
 	fmt.Println("Pattern Engine: READY")
 	fmt.Println("Retrieval Engine: READY")
+	fmt.Println("Multi-Agent Layer: READY")
 
 	return nil
 }
@@ -98,6 +113,9 @@ func (k *Kernel) Start() error {
 // Shutdown coordinates system shutdown
 func (k *Kernel) Shutdown() error {
 	fmt.Println("Orion Cognitive Runtime Kernel shutting down...")
+
+	k.agentSupervisor.StopAgents(k.ctx)
+
 	k.cancel()
 
 	if k.globalDB != nil {
@@ -121,4 +139,8 @@ func (k *Kernel) GetEventBus() *types.EventBus {
 
 func (k *Kernel) GetCognition() *cognition.CognitionEngine {
 	return k.cognition
+}
+
+func (k *Kernel) GetAgentRegistry() *agents.Registry {
+	return k.agentRegistry
 }

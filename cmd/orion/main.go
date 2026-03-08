@@ -11,7 +11,7 @@ import (
 
 func main() {
 	fmt.Println("#########################################")
-	fmt.Println("# Orion Cognitive Runtime - Start #")
+	fmt.Println("# Orion Multi-Agent Cognitive Runtime #")
 	fmt.Println("#########################################")
 
 	// Determine data directory
@@ -20,25 +20,35 @@ func main() {
 		dataDir = "data"
 	}
 
-	// 1. Initialize the Kernel (wires up all cognitive subsystems)
+	// 1. Initialize the Kernel
 	kernel, err := runtime.NewKernel(dataDir)
 	if err != nil {
 		log.Fatalf("Critical Failure: failed to initialize kernel: %v", err)
 	}
 
-	// 2. Start kernel
+	// 2. Initialize and Register Autonomous Agents
+	ar := kernel.GetAgentRegistry()
+
+	ar.RegisterAgent(&runtime.ConversationAgent{})
+	ar.RegisterAgent(&runtime.PlannerAgent{})
+	ar.RegisterAgent(&runtime.CodeIndexerAgent{})
+	ar.RegisterAgent(&runtime.AnalysisAgent{})
+	ar.RegisterAgent(&runtime.MemoryGardenerAgent{})
+	ar.RegisterAgent(&runtime.PatternDetectorAgent{})
+
+	// 3. Start kernel
 	if err := kernel.Start(); err != nil {
 		log.Fatalf("Critical Failure: failed to start kernel: %v", err)
 	}
 
-	// 3. Simulate a goal being processed
+	// 4. Simulate multi-agent task execution
 	ctx := kernel.Context()
 	testGoal := &goal.Goal{
-		ID:          "goal-001",
-		Description: "Analyze the current repository for patterns",
+		ID:          "goal-multi-agent-001",
+		Description: "Perform repository analysis and update memory graph",
 	}
 
-	fmt.Printf("Submitting Test Goal: %s\n", testGoal.Description)
+	fmt.Printf("Submitting Multi-Agent Goal: %s\n", testGoal.Description)
 	if err := kernel.GetCognition().Process(ctx, testGoal); err != nil {
 		fmt.Printf("Goal processing failed: %v\n", err)
 	}
