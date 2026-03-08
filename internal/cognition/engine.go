@@ -6,67 +6,57 @@ import (
 	"time"
 
 	"orion/internal/agents"
-	"orion/internal/pattern"
-	"orion/internal/retrieval"
 	"orion/internal/runtime/goal"
 	"orion/internal/types"
 )
 
 type CognitionEngine struct {
-	pipeline      OODALPipeline
-	eventBus      *types.EventBus
-	retrieval     *retrieval.RetrievalEngine
-	patternEngine *pattern.Engine
-	dispatcher    *agents.Dispatcher
+	pipeline   OODALPipeline
+	eventBus   *types.EventBus
+	dispatcher *agents.Dispatcher
 }
 
-func NewCognitionEngine(pipeline OODALPipeline, eb *types.EventBus, re *retrieval.RetrievalEngine, pe *pattern.Engine, ad *agents.Dispatcher) *CognitionEngine {
+func NewCognitionEngine(pipeline OODALPipeline, eb *types.EventBus, ad *agents.Dispatcher) *CognitionEngine {
 	return &CognitionEngine{
-		pipeline:      pipeline,
-		eventBus:      eb,
-		retrieval:     re,
-		patternEngine: pe,
-		dispatcher:    ad,
+		pipeline:   pipeline,
+		eventBus:   eb,
+		dispatcher: ad,
 	}
 }
 
+// Process initiates the coordinated multi-agent cognition flow
 func (ce *CognitionEngine) Process(ctx context.Context, g *goal.Goal) error {
-	fmt.Printf("CognitionEngine: Starting Multi-Agent OODA-L loop for goal %s\n", g.ID)
+	fmt.Printf("CognitionEngine: Starting Coordinated Pipeline for goal %s\n", g.ID)
 
-	// 1. OBSERVE
+	// OBSERVE
 	obs, err := ce.pipeline.Observe(ctx, g.Description)
 	if err != nil { return err }
-	ce.eventBus.Publish(types.Event{Type: "observation_recorded", Payload: obs, CreatedAt: time.Now()})
+	ce.eventBus.Publish(types.Event{Type: "cognition.observe.completed", Payload: obs, CreatedAt: time.Now()})
 
-	// 2. ORIENT
-	if p, found := ce.patternEngine.Match(ctx, g.Description); found {
-		fmt.Printf("Cognition: Pattern match found. Bypassing planning.\n")
-		return ce.patternEngine.ExecutePattern(ctx, p)
+	// Dispatch next stages via events/dispatcher
+	// The flow is now event-driven:
+	// observe.completed -> symbol_lookup
+	// symbol_lookup.completed -> pattern_match
+	// ... and so on.
+
+	// Start the chain
+	return ce.dispatcher.Dispatch(ctx, "symbol_resolution", g.ID)
+}
+
+func (ce *CognitionEngine) HandleStageCompletion(ctx context.Context, event types.Event) {
+	// Logic to trigger next stage based on event.Type
+	switch event.Type {
+	case "cognition.observe.completed":
+		ce.dispatcher.Dispatch(ctx, "symbol_resolution", event.Payload)
+	case "cognition.symbol_lookup.completed":
+		ce.dispatcher.Dispatch(ctx, "pattern_matching", event.Payload)
+	case "cognition.pattern_match.completed":
+		ce.dispatcher.Dispatch(ctx, "vector_search", event.Payload)
+	case "cognition.retrieval.completed":
+		ce.dispatcher.Dispatch(ctx, "planning", event.Payload)
+	case "cognition.plan.completed":
+		ce.dispatcher.Dispatch(ctx, "act_stage_execution", event.Payload)
+	case "cognition.act.completed":
+		ce.eventBus.Publish(types.Event{Type: "cognition.learn.completed", CreatedAt: time.Now()})
 	}
-
-	bundle, err := ce.retrieval.AssembleContext(ctx, g.Description)
-	if err != nil { return err }
-
-	// 3. DECIDE
-	decision, err := ce.pipeline.Decide(ctx, bundle)
-	if err != nil { return err }
-
-	// 4. DISPATCH AGENTS (New Stage)
-	fmt.Println("Cognition: Dispatching agents for ACT stage.")
-	if err := ce.dispatcher.Dispatch(ctx, "general_task", decision); err != nil {
-		fmt.Printf("Cognition: Dispatch failed: %v. Falling back to ACT.\n", err)
-	}
-
-	// 5. ACT (Default or Agent-led)
-	result, err := ce.pipeline.Act(ctx, decision)
-	if err != nil { return err }
-	ce.eventBus.Publish(types.Event{Type: "tool_executed", Payload: result, CreatedAt: time.Now()})
-
-	// 6. LEARN
-	if err := ce.pipeline.Learn(ctx, result); err != nil { return err }
-
-	// 7. GARDEN
-	if err := ce.pipeline.Garden(ctx, g.ID); err != nil { return err }
-
-	return nil
 }

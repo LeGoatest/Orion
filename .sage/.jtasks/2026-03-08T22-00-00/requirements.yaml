@@ -1,0 +1,13 @@
+requirements:
+  - id: REQ-AGENT-COORDINATION
+    description: Wire the multi-agent runtime into the cognition pipeline with specialized stage ownership.
+    priority: HIGH
+  - id: REQ-EVENT-DRIVEN-HANDOFF
+    description: Implement event-driven stage handoffs between agents via the event bus.
+    priority: HIGH
+  - id: REQ-STAGE-TRACKING
+    description: Goals must track their current cognition stage and agent assignment.
+    priority: HIGH
+  - id: REQ-AGENT-LIFECYCLE-EVENTS
+    description: Emit and track agent lifecycle and task assignment events.
+    priority: HIGH

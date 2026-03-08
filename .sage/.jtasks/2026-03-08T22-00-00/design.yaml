@@ -1,0 +1,14 @@
+design:
+  agent_mapping:
+    ConversationAgent: [intake, goal_creation, output]
+    SymbolLookupAgent: [symbol_resolution]
+    PatternDetectorAgent: [pattern_matching, reasoning_bypass]
+    RetrievalAgent: [vector_search, graph_expansion, scoring]
+    PlannerAgent: [execution_planning]
+    ToolExecutorAgent: [act_stage_execution]
+    MemoryGardenerAgent: [gardening, maintenance]
+    CodeIndexerAgent: [background_indexing]
+  pipeline_flow:
+    events: [cognition.observe.completed, cognition.symbol_lookup.completed, cognition.pattern_match.completed, cognition.retrieval.completed, cognition.plan.completed, cognition.act.completed, cognition.learn.completed, cognition.garden.scheduled]
+  coordination:
+    mechanism: [event_bus, dispatcher, scheduler]

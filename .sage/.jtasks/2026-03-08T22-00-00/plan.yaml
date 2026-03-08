@@ -1,0 +1,19 @@
+steps:
+  - id: step-1-agent-updates
+    description: Create ToolExecutorAgent and update existing agents in internal/agents/.
+    files: [internal/agents/agent.go, internal/agents/tool_executor.go]
+  - id: step-2-pipeline-refactor
+    description: Refactor cognition engine for dispatchable stages.
+    files: [internal/cognition/engine.go, internal/cognition/pipeline.go]
+  - id: step-3-dispatch-lifecycle
+    description: Integrate agent dispatch and lifecycle tracking.
+    files: [internal/agents/dispatcher.go, internal/agents/supervisor.go, internal/runtime/kernel.go]
+  - id: step-4-events-handoff
+    description: Implement event bus handoffs and lifecycle events.
+    files: [internal/runtime/event_bus.go, internal/agents/agent.go]
+  - id: step-5-goal-model-extension
+    description: Extend goal and job models for stage tracking.
+    files: [internal/runtime/goal/goal.go, internal/runtime/goal/jobs.go]
+  - id: step-6-main-integration
+    description: Final integration in main.go.
+    files: [cmd/orion/main.go]

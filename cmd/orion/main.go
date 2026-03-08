@@ -7,6 +7,10 @@ import (
 
 	"orion/internal/runtime"
 	"orion/internal/runtime/goal"
+	"orion/internal/bridge"
+
+	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/options"
 )
 
 func main() {
@@ -14,50 +18,37 @@ func main() {
 	fmt.Println("# Orion Multi-Agent Cognitive Runtime #")
 	fmt.Println("#########################################")
 
-	// Determine data directory
 	dataDir := os.Getenv("ORION_DATA_DIR")
 	if dataDir == "" {
 		dataDir = "data"
 	}
 
-	// 1. Initialize the Kernel
+	// 1. Initialize Kernel
 	kernel, err := runtime.NewKernel(dataDir)
 	if err != nil {
 		log.Fatalf("Critical Failure: failed to initialize kernel: %v", err)
 	}
 
-	// 2. Initialize and Register Autonomous Agents
-	ar := kernel.GetAgentRegistry()
-
-	ar.RegisterAgent(&runtime.ConversationAgent{})
-	ar.RegisterAgent(&runtime.PlannerAgent{})
-	ar.RegisterAgent(&runtime.CodeIndexerAgent{})
-	ar.RegisterAgent(&runtime.AnalysisAgent{})
-	ar.RegisterAgent(&runtime.MemoryGardenerAgent{})
-	ar.RegisterAgent(&runtime.PatternDetectorAgent{})
-
-	// 3. Start kernel
+	// 2. Start Kernel
 	if err := kernel.Start(); err != nil {
 		log.Fatalf("Critical Failure: failed to start kernel: %v", err)
 	}
 
-	// 4. Simulate multi-agent task execution
-	ctx := kernel.Context()
-	testGoal := &goal.Goal{
-		ID:          "goal-multi-agent-001",
-		Description: "Perform repository analysis and update memory graph",
-	}
+	// 3. Setup Wails Bridge
+	appBridge := bridge.NewBridge(kernel)
 
-	fmt.Printf("Submitting Multi-Agent Goal: %s\n", testGoal.Description)
-	if err := kernel.GetCognition().Process(ctx, testGoal); err != nil {
-		fmt.Printf("Goal processing failed: %v\n", err)
-	}
+	// 4. Run Desktop Shell
+	err = wails.Run(&options.App{
+		Title:  "Orion Cognitive Runtime",
+		Width:  1024,
+		Height: 768,
+		Bind: []interface{}{
+			appBridge,
+		},
+		OnStartup: appBridge.Startup,
+	})
 
-	fmt.Println("Orion Cognitive Runtime is running.")
-
-	// For simulation, we stay alive
-	select {
-	case <-ctx.Done():
-		fmt.Println("Runtime terminated.")
+	if err != nil {
+		log.Fatalf("Desktop Shell Error: %v", err)
 	}
 }

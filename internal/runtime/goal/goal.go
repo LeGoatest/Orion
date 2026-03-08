@@ -5,38 +5,33 @@ import (
 	"time"
 )
 
-type GoalState string
+type GoalStage string
 
 const (
-	StateNew       GoalState = "NEW"
-	StateObserve   GoalState = "OBSERVE"
-	StateOrient    GoalState = "ORIENT"
-	StateDecide    GoalState = "DECIDE"
-	StateAct       GoalState = "ACT"
-	StateLearn     GoalState = "LEARN"
-	StateGarden    GoalState = "GARDEN"
-	StateWaiting   GoalState = "WAITING"
-	StateCompleted GoalState = "COMPLETED"
-	StateFailed    GoalState = "FAILED"
-	StateArchived  GoalState = "ARCHIVED"
+	StageObserve      GoalStage = "OBSERVE"
+	StageSymbolLookup GoalStage = "SYMBOL_LOOKUP"
+	StagePatternMatch GoalStage = "PATTERN_MATCH"
+	StageRetrieval    GoalStage = "RETRIEVAL"
+	StagePlanning     GoalStage = "PLANNING"
+	StageExecution    GoalStage = "EXECUTION"
+	StageLearn        GoalStage = "LEARN"
+	StageGarden       GoalStage = "GARDEN"
 )
 
 type Goal struct {
-	ID          string
-	Description string
-	State       GoalState
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID            string
+	Description   string
+	CurrentStage  GoalStage
+	AssignedAgent string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type GoalRuntime struct{}
 
-func NewGoalRuntime() *GoalRuntime {
-	return &GoalRuntime{}
-}
-
-func (gr *GoalRuntime) Transition(goal *Goal, newState GoalState) {
-	fmt.Printf("Goal %s: %s -> %s\n", goal.ID, goal.State, newState)
-	goal.State = newState
-	goal.UpdatedAt = time.Now()
+func (gr *GoalRuntime) AdvanceStage(g *Goal, next GoalStage, agentName string) {
+	fmt.Printf("Goal %s: %s -> %s (Agent: %s)\n", g.ID, g.CurrentStage, next, agentName)
+	g.CurrentStage = next
+	g.AssignedAgent = agentName
+	g.UpdatedAt = time.Now()
 }

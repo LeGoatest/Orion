@@ -13,7 +13,7 @@ type Event struct {
 	CreatedAt time.Time
 }
 
-// EventBus provides asynchronous communication
+// EventBus provides asynchronous communication with stage-aware routing
 type EventBus struct {
 	mu          sync.RWMutex
 	subscribers map[string][]chan Event
@@ -38,12 +38,22 @@ func (eb *EventBus) Publish(event Event) {
 	eb.mu.RLock()
 	defer eb.mu.RUnlock()
 
+	// Direct type routing
 	if subs, ok := eb.subscribers[event.Type]; ok {
 		for _, ch := range subs {
 			select {
 			case ch <- event:
 			default:
-				// Buffer full, skip or log
+			}
+		}
+	}
+
+	// Wildcard routing for loggers/supervisors
+	if subs, ok := eb.subscribers["*"]; ok {
+		for _, ch := range subs {
+			select {
+			case ch <- event:
+			default:
 			}
 		}
 	}
