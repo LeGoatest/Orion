@@ -2,15 +2,15 @@
 
 ## Existing Systems
 - Multi-agent foundation (Registry, Supervisor, Dispatcher)
-- OODA-L cognition logic (centralized)
+- Centralized cognition engine (cognition.go)
 - Event bus
-- Goal persistence
+- SQLite storage
 
-## Missing Components
-- **Agent Stage Ownership**: Logic to explicitly assign and hand off cognition stages to agents.
-- **Event-Based Handoff**: The engine currently triggers stages linearly; it needs to respond to completion events to trigger the next dispatch.
-- **Stage Tracking**: Goals don't yet record their progress through the specific cognition stages (SymbolLookup, PatternMatch, etc.).
-- **Autonomous Background Loops**: Background agents (Indexer, Gardener) need autonomous control within the multi-agent framework.
+## Missing/Partial Logic
+- **Agent Stage Ownership**: Agents are not yet explicitly assigned to cognition stages.
+- **Dispatcher Stage Routing**: Dispatcher doesn't map stages to capabilities or create durable jobs.
+- **Goal Stage Persistence**: Goals do not track their current OODA-L stage in the database.
+- **Event-Based Handoff**: The engine triggers stages linearly rather than responding to bus events for handoff.
 
 ## Architecture Conflicts
-- Transition from a "function-call" pipeline to an "event-dispatch" pipeline requires careful handling of shared context (ContextBundle).
+- Transition from centralized function calls to distributed agent jobs requires careful state management to ensure determinism.

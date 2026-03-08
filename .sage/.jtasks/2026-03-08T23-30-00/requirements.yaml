@@ -1,13 +1,13 @@
 requirements:
   - id: REQ-AGENT-DRIVEN-PIPELINE
-    description: Refactor cognition engine so each stage is executed by a registered agent.
+    description: Refactor cognition engine to dispatch stages to registered agents via dispatcher and scheduler.
     priority: HIGH
-  - id: REQ-DISPATCH-ROUTING
-    description: Dispatcher must map cognition stages to agent capabilities and manage job execution via scheduler.
+  - id: REQ-GOAL-STAGE-TRACKING
+    description: Persist and track explicit cognition stages (OBSERVE, SYMBOL_LOOKUP, etc.) on every goal.
     priority: HIGH
-  - id: REQ-EVENT-HANDOFF
-    description: Implement event-based handoff between cognition stages to ensure decoupled agent coordination.
+  - id: REQ-EVENT-DRIVEN-TRANSITION
+    description: Use event bus to drive stage transitions (e.g. observe.completed -> trigger next stage).
     priority: HIGH
-  - id: REQ-STAGE-PERSISTENCE
-    description: Goal state transitions and stage progress must be persisted in the workspace database.
+  - id: REQ-AGENT-AUTONOMY
+    description: Agents must operate as autonomous execution units managed by the supervisor and scheduler.
     priority: HIGH
