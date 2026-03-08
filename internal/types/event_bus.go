@@ -1,10 +1,15 @@
 package types
 
-import "sync"
-import "time"
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 
 type Event struct {
 	ID        string
+	GoalID    string
+	WorkspaceID string
 	Type      string
 	Payload   interface{}
 	CreatedAt time.Time
@@ -30,10 +35,34 @@ func (eb *EventBus) Subscribe(eventType string) chan Event {
 func (eb *EventBus) Publish(event Event) {
 	eb.mu.RLock()
 	defer eb.mu.RUnlock()
-	if subs, ok := eb.subscribers[event.Type]; ok {
-		for _, ch := range subs { select { case ch <- event: default: } }
-	}
-	if subs, ok := eb.subscribers["*"]; ok {
-		for _, ch := range subs { select { case ch <- event: default: } }
+
+	eb.publishTo(event, event.Type)
+	eb.publishTo(event, "*")
+}
+
+func (eb *EventBus) publishTo(event Event, eventType string) {
+	if subs, ok := eb.subscribers[eventType]; ok {
+		for _, ch := range subs {
+			select {
+			case ch <- event:
+				// Event sent successfully
+			default:
+				// Buffer full: drop oldest event and enqueue new one
+				// We need to drain one from the channel to make room
+				select {
+				case dropped := <-ch:
+					fmt.Printf("Warning: EventBus buffer full for type %s. Dropped oldest event: %v\n", eventType, dropped.Type)
+				default:
+					// Channel might have been drained by someone else in the meantime
+				}
+
+				// Try again to send the new event
+				select {
+				case ch <- event:
+				default:
+					// If it still fails, just skip (should be rare)
+				}
+			}
+		}
 	}
 }

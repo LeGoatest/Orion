@@ -1,0 +1,54 @@
+steps:
+  - id: S1
+    title: "Produce GAP_REPORT.md"
+    outputs:
+      - ".sage/.jtasks/2026-03-08T20-57-21/GAP_REPORT.md"
+    verification:
+      - "File exists and contains weaknesses identified during inspection."
+  - id: S2
+    title: "Implement Goal + Job Persistence"
+    outputs:
+      - "internal/runtime/goal.go"
+      - "internal/runtime/jobs.go"
+      - "internal/storage/sqlite/db.go"
+    verification:
+      - "Verify SQLite schema and transactional logic for stage transitions."
+  - id: S3
+    title: "Enhance Event Bus Reliability"
+    outputs:
+      - "internal/types/event_bus.go"
+    verification:
+      - "Test buffer overflow behavior and ensure it remains non-blocking."
+  - id: S4
+    title: "Harden Agent Supervisor"
+    outputs:
+      - "internal/agents/supervisor.go"
+      - "internal/agents/agents.go"
+    verification:
+      - "Simulate agent failure and verify supervisor restart logic."
+  - id: S5
+    title: "Refine Dispatcher Stability"
+    outputs:
+      - "internal/agents/dispatcher.go"
+    verification:
+      - "Ensure dispatcher does not execute logic and flows through scheduler."
+  - id: S6
+    title: "Mature Retrieval Pipeline"
+    outputs:
+      - "internal/retrieval/engine.go"
+    verification:
+      - "Verify hybrid scoring calculation and ContextBundle assembly."
+  - id: S7
+    title: "Bootstrap Cleanup"
+    outputs:
+      - "cmd/orion/main.go"
+    verification:
+      - "Ensure system starts without hardcoded goals."
+
+definition_of_done:
+  - id: D1
+    description: "All hardening requirements implemented and verified."
+  - id: D2
+    description: "Code compiles and follows Go idiomatic patterns."
+  - id: D3
+    description: "Workspace isolation preserved and verified."

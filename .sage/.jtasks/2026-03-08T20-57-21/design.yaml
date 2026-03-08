@@ -1,0 +1,41 @@
+overview: "Implementation of a durable, reliable, and isolated multi-agent runtime for Orion using SQLite3 and event-driven coordination."
+
+components:
+  - name: "internal/runtime"
+    change: "modify"
+  - name: "internal/agents"
+    change: "modify"
+  - name: "internal/storage/sqlite"
+    change: "modify"
+  - name: "internal/retrieval"
+    change: "modify"
+  - name: "cmd/orion"
+    change: "modify"
+
+interfaces:
+  - name: "AutonomousAgent"
+    change: "modify"
+  - name: "EventBus"
+    change: "modify"
+
+decisions:
+  - id: D1
+    topic: "Persistence Location"
+    choice: "Workspace-specific SQLite databases"
+    reason: "Strict isolation and data locality for user workspaces."
+  - id: D2
+    topic: "Concurrency Model"
+    choice: "Go channels for in-memory event bus with bounded buffers"
+    reason: "Maintains high performance while providing backpressure/overflow handling."
+  - id: D3
+    topic: "Agent Health"
+    choice: "Event-based heartbeats monitored by Supervisor"
+    reason: "Decouples health monitoring from direct agent inspection."
+
+risks:
+  - id: R1
+    risk: "SQLite file locks in WAL mode during high concurrency"
+    mitigation: "Use appropriate busy timeouts and transactional boundaries."
+  - id: R2
+    risk: "Slow consumers causing event loss"
+    mitigation: "Implement bounded buffers with 'drop-oldest' policy and logging."
