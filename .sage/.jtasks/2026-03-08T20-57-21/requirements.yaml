@@ -1,0 +1,37 @@
+task_id: "2026-03-08T20-57-21"
+
+objective: "Harden and complete the currently implemented Orion runtime for production readiness."
+
+scope:
+  in:
+    - goal + job persistence (workspace.db)
+    - event bus reliability (bounded buffers, non-blocking)
+    - supervisor lifecycle hardening (heartbeats, restarts)
+    - dispatcher stability (stage mapping, job creation)
+    - retrieval/context bundle maturity (hybrid scoring)
+    - bootstrap cleanup (remove test goals)
+  out:
+    - architecture rewrite
+    - new API or CLI subsystems
+    - cross-workspace data access
+
+constraints:
+  - use SQLite3 (github.com/mattn/go-sqlite3) with CGO enabled
+  - PRAGMA journal_mode=WAL; must be enabled
+  - stage transitions must be transactional (BEGIN; update goal; insert/update job; COMMIT)
+  - workspace isolation must be strictly enforced at the database layer
+  - event bus must remain in-memory and non-blocking
+  - retrieval scoring formula: 0.55*semantic + 0.15*graph + 0.15*temporal + 0.10*usage + 0.05*importance
+  - agent heartbeats: ~5s interval, >15s timeout for failure
+
+acceptance_criteria:
+  - id: AC1
+    description: "Goal and job states persist across runtime restarts in workspace-specific databases."
+  - id: AC2
+    description: "Event bus handles slow consumers by dropping oldest events and logging warnings."
+  - id: AC3
+    description: "Supervisor detects agent crashes via missing heartbeats and restarts them."
+  - id: AC4
+    description: "Retrieval pipeline produces a ContextBundle using the specified hybrid scoring formula."
+  - id: AC5
+    description: "System boots to an idle state ready for real user goals without hardcoded test data."

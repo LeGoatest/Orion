@@ -17,17 +17,17 @@ import (
 
 // Kernel is the central orchestrator of Orion
 type Kernel struct {
-	mu             sync.RWMutex
-	GlobalDB       *sql.DB
-	EventBus       *types.EventBus
-	Scheduler      *execution.Scheduler
-	WorkerPool     *execution.WorkerPool
-	WorkspaceMgr   *workspace.Manager
-	Cognition      *cognition.CognitionEngine
-	Supervisor     *agents.Supervisor
-	Dispatcher     *agents.Dispatcher
-	ctx            context.Context
-	cancel         context.CancelFunc
+	mu           sync.RWMutex
+	GlobalDB     *sql.DB
+	EventBus     *types.EventBus
+	Scheduler    *execution.Scheduler
+	WorkerPool   *execution.WorkerPool
+	WorkspaceMgr *workspace.Manager
+	Cognition    *cognition.CognitionEngine
+	Supervisor   *agents.Supervisor
+	Dispatcher   *agents.Dispatcher
+	ctx          context.Context
+	cancel       context.CancelFunc
 }
 
 // NewKernel initializes the runtime kernel
@@ -49,7 +49,7 @@ func NewKernel(dataDir string) (*Kernel, error) {
 	as := agents.NewSupervisor(ar, eb)
 	ad := agents.NewDispatcher(ar, sch, eb)
 
-	ce := cognition.NewCognitionEngine(&cognition.DefaultPipeline{}, eb, ad)
+	ce := cognition.NewCognitionEngine(&cognition.DefaultPipeline{}, eb, ad, wm)
 
 	return &Kernel{
 		GlobalDB:     db,

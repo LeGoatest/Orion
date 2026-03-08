@@ -10,7 +10,7 @@ import (
 
 func main() {
 	fmt.Println("#########################################")
-	fmt.Println("# Orion Coordinated Cognitive Runtime #")
+	fmt.Println("# Orion Coordinated Cognitive Runtime   #")
 	fmt.Println("#########################################")
 
 	dataDir := os.Getenv("ORION_DATA_DIR")
@@ -37,19 +37,12 @@ func main() {
 	// 3. Start Multi-Agent System
 	kernel.Start()
 
-	// 4. Trigger Goal Injection (Bootstrap Simulation)
-	ctx := kernel.Context()
-	testGoalID := "goal-coordinated-001"
-	testDesc := "Analyze the current multi-agent coordination performance"
-
-	fmt.Printf("Submitting Test Goal: %s\n", testDesc)
-	if err := kernel.Cognition.Process(ctx, testGoalID, testDesc); err != nil {
-		fmt.Printf("Initial dispatch failed: %v\n", err)
-	}
-
-	fmt.Println("Orion Coordinated Runtime is running.")
+	// 4. Removed hardcoded bootstrap test goals.
+	// System is now ready for real external input.
+	fmt.Println("Orion Coordinated Runtime is IDLE and ready for user goals.")
 
 	// Keep running to allow agent jobs to process
+	ctx := kernel.Context()
 	select {
 	case <-ctx.Done():
 		fmt.Println("Runtime terminated.")

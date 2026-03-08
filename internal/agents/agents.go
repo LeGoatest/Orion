@@ -2,13 +2,11 @@ package agents
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"orion/internal/execution"
 	"orion/internal/types"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type AutonomousAgent interface {
@@ -18,13 +16,15 @@ type AutonomousAgent interface {
 }
 
 type AgentJob struct {
-	IDVal      string
-	GoalID     string
-	Stage      string
-	Agent      AutonomousAgent
-	Task       interface{}
-	EventBus   *types.EventBus
-	RetryCount int
+	IDVal       string
+	GoalID      string
+	WorkspaceID string
+	Stage       string
+	Agent       AutonomousAgent
+	Task        interface{}
+	EventBus    *types.EventBus
+	RetryCount  int
+	WorkspaceDB *sql.DB
 }
 
 func (j *AgentJob) ID() string   { return j.IDVal }
@@ -32,33 +32,56 @@ func (j *AgentJob) Type() string { return "AgentTask" }
 
 func (j *AgentJob) Execute(ctx context.Context) error {
 	j.EventBus.Publish(types.Event{
-		Type:      "agent.task_received",
-		Payload:   map[string]string{"agent": j.Agent.Name(), "stage": j.Stage, "goal_id": j.GoalID},
-		CreatedAt: time.Now(),
+		Type:        "agent.task_received",
+		GoalID:      j.GoalID,
+		WorkspaceID: j.WorkspaceID,
+		Payload:     map[string]interface{}{"agent": j.Agent.Name(), "stage": j.Stage},
+		CreatedAt:   time.Now(),
 	})
+
+	// Mark job as running in DB
+	if j.WorkspaceDB != nil {
+		_, _ = j.WorkspaceDB.Exec("UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?", "running", time.Now(), j.IDVal)
+	}
 
 	result, err := j.Agent.ExecuteTask(ctx, j.Task)
 	if err != nil {
 		j.EventBus.Publish(types.Event{
-			Type:      "agent.error",
-			Payload:   map[string]string{"agent": j.Agent.Name(), "error": err.Error(), "goal_id": j.GoalID},
-			CreatedAt: time.Now(),
+			Type:        "agent.error",
+			GoalID:      j.GoalID,
+			WorkspaceID: j.WorkspaceID,
+			Payload:     map[string]interface{}{"agent": j.Agent.Name(), "error": err.Error()},
+			CreatedAt:   time.Now(),
 		})
+
+		if j.WorkspaceDB != nil {
+			_, _ = j.WorkspaceDB.Exec("UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?", "failed", time.Now(), j.IDVal)
+		}
 		return err
 	}
 
 	// Publish stage completion event
 	j.EventBus.Publish(types.Event{
-		Type:      fmt.Sprintf("cognition.%s.completed", j.Stage),
-		Payload:   map[string]interface{}{"goal_id": j.GoalID, "result": result},
-		CreatedAt: time.Now(),
+		Type:        fmt.Sprintf("cognition.%s.completed", j.Stage),
+		GoalID:      j.GoalID,
+		WorkspaceID: j.WorkspaceID,
+		Payload:     map[string]interface{}{"result": result},
+		CreatedAt:   time.Now(),
 	})
 
 	j.EventBus.Publish(types.Event{
-		Type:      "agent.task_completed",
-		Payload:   map[string]string{"agent": j.Agent.Name(), "stage": j.Stage, "goal_id": j.GoalID},
-		CreatedAt: time.Now(),
+		Type:        "agent.task_completed",
+		GoalID:      j.GoalID,
+		WorkspaceID: j.WorkspaceID,
+		Payload:     map[string]interface{}{"agent": j.Agent.Name(), "stage": j.Stage},
+		CreatedAt:   time.Now(),
 	})
+
+	// Mark job as completed in DB
+	if j.WorkspaceDB != nil {
+		now := time.Now()
+		_, _ = j.WorkspaceDB.Exec("UPDATE jobs SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?", "completed", now, now, j.IDVal)
+	}
 
 	return nil
 }
@@ -101,73 +124,4 @@ func (r *Registry) GetAgentsByCapability(c string) []AutonomousAgent {
 		}
 	}
 	return m
-}
-
-type Supervisor struct {
-	Registry *Registry
-	EventBus *types.EventBus
-}
-
-func NewSupervisor(r *Registry, eb *types.EventBus) *Supervisor {
-	return &Supervisor{Registry: r, EventBus: eb}
-}
-
-func (s *Supervisor) StartAgents(ctx context.Context) error {
-	for _, a := range s.Registry.ListAgents() {
-		s.EventBus.Publish(types.Event{Type: "agent.started", Payload: a.Name(), CreatedAt: time.Now()})
-	}
-	return nil
-}
-
-func (s *Supervisor) StopAgents(ctx context.Context) error {
-	for _, a := range s.Registry.ListAgents() {
-		s.EventBus.Publish(types.Event{Type: "agent.stopped", Payload: a.Name(), CreatedAt: time.Now()})
-	}
-	return nil
-}
-
-type Dispatcher struct {
-	Registry  *Registry
-	Scheduler *execution.Scheduler
-	EventBus  *types.EventBus
-}
-
-func NewDispatcher(r *Registry, s *execution.Scheduler, eb *types.EventBus) *Dispatcher {
-	return &Dispatcher{
-		Registry:  r,
-		Scheduler: s,
-		EventBus:  eb,
-	}
-}
-
-func (d *Dispatcher) Dispatch(ctx context.Context, stage string, goalID string, task interface{}) error {
-	cap := stage
-	if stage == "ACT" {
-		cap = "tool_execution"
-	}
-
-	m := d.Registry.GetAgentsByCapability(cap)
-	if len(m) == 0 {
-		return fmt.Errorf("no agent for stage %s (capability %s)", stage, cap)
-	}
-
-	agent := m[0]
-	job := &AgentJob{
-		IDVal:    uuid.New().String(),
-		GoalID:   goalID,
-		Stage:    stage,
-		Agent:    agent,
-		Task:     task,
-		EventBus: d.EventBus,
-	}
-
-	d.Scheduler.Schedule(job)
-
-	d.EventBus.Publish(types.Event{
-		Type:      "agent.task_assigned",
-		Payload:   map[string]string{"agent": agent.Name(), "stage": stage, "goal_id": goalID},
-		CreatedAt: time.Now(),
-	})
-
-	return nil
 }
