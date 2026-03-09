@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"orion/internal/runtime"
 	"os"
 	"os/signal"
 	"syscall"
+	"orion/internal/runtime"
 )
 
 func main() {
@@ -14,11 +14,14 @@ func main() {
 	if dataDir == "" {
 		dataDir = "data"
 	}
+
 	k, err := runtime.NewKernel(dataDir)
 	if err != nil {
 		fmt.Printf("Fatal: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Register specialized agents
 	k.Supervisor.Reg.RegisterAgent(&runtime.ConversationAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
 	k.Supervisor.Reg.RegisterAgent(&runtime.SymbolLookupAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
 	k.Supervisor.Reg.RegisterAgent(&runtime.PlannerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
@@ -28,9 +31,19 @@ func main() {
 	k.Supervisor.Reg.RegisterAgent(&runtime.CodeIndexerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
 	k.Supervisor.Reg.RegisterAgent(&runtime.MemoryGardenerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
 	k.Supervisor.Reg.RegisterAgent(&runtime.PatternDetectorAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+
 	k.Start()
 	fmt.Println("Runtime operational.")
-	go func() { k.Cognition.Process(k.Context(), "goal-1", "Harden the coordination runtime") }()
+
+	// Initial bootstrap goal
+	go func() {
+		k.Cognition.Process(k.Context(), "goal-1", "Harden the coordination runtime")
+	}()
+
+	// Wails UI placeholder: In a production Wails app,
+	// this is where wails.Run() would be called.
+	// For now, we maintain the Go runtime loop.
+
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 	select {

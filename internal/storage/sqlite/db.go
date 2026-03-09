@@ -3,9 +3,9 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"path/filepath"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type DB struct {

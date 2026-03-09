@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Orion Core Theme */
+:root {
+  --background: oklch(0.15 0.02 250);
+  --foreground: oklch(0.98 0.01 250);
+}
+
+@theme {
+  --color-brand: oklch(0.6 0.18 250);
+}

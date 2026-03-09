@@ -24,8 +24,8 @@ func (s *Scorer) Calculate(f Factors) float32 {
 	// Orion Hybrid Scoring formula:
 	// score = 0.55 semantic + 0.15 graph + 0.15 temporal + 0.10 usage + 0.05 importance
 	return (0.55 * f.Semantic) +
-		(0.15 * f.Graph) +
-		(0.15 * f.Temporal) +
-		(0.10 * f.Usage) +
-		(0.05 * f.Importance)
+	       (0.15 * f.Graph) +
+	       (0.15 * f.Temporal) +
+	       (0.10 * f.Usage) +
+	       (0.05 * f.Importance)
 }

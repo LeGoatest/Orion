@@ -3,8 +3,8 @@ package callgraph
 import (
 	"context"
 	"fmt"
-	sitter "github.com/smacker/go-tree-sitter"
 	"orion/internal/code/parser"
+	sitter "github.com/smacker/go-tree-sitter"
 )
 
 type Builder struct {
@@ -13,9 +13,7 @@ type Builder struct {
 
 func (b *Builder) BuildCallGraph(ctx context.Context, filePath string, source []byte) error {
 	tree, err := b.parser.Parse(ctx, parser.Go, source)
-	if err != nil {
-		return err
-	}
+	if err != nil { return err }
 
 	fmt.Printf("CallGraph: Analyzing calls in %s\n", filePath)
 	b.traverseForCalls(tree.RootNode(), source)
@@ -23,9 +21,7 @@ func (b *Builder) BuildCallGraph(ctx context.Context, filePath string, source []
 }
 
 func (b *Builder) traverseForCalls(node *sitter.Node, source []byte) {
-	if node == nil {
-		return
-	}
+	if node == nil { return }
 
 	// Real logic: identify call_expression nodes and resolve them to symbols
 	if node.Type() == "call_expression" {

@@ -2,9 +2,9 @@ package pattern
 
 import (
 	"context"
-	"orion/internal/types"
 	"sync"
 	"time"
+	"orion/internal/types"
 )
 
 type State string
@@ -47,8 +47,8 @@ func (e *Engine) Match(ctx context.Context, goal string) (*Pattern, bool) {
 	pattern, found := e.store.MatchTrigger(ctx, goal)
 	if found && pattern.Confidence > 0.8 {
 		e.eb.Publish(types.Event{
-			Type:      "pattern.matched",
-			Payload:   pattern,
+			Type: "pattern.matched",
+			Payload: pattern,
 			CreatedAt: time.Now(),
 		})
 		return pattern, true
@@ -58,8 +58,8 @@ func (e *Engine) Match(ctx context.Context, goal string) (*Pattern, bool) {
 
 func (e *Engine) ExecutePattern(ctx context.Context, pattern *Pattern) error {
 	e.eb.Publish(types.Event{
-		Type:      "pattern.executed",
-		Payload:   pattern.ID,
+		Type: "pattern.executed",
+		Payload: pattern.ID,
 		CreatedAt: time.Now(),
 	})
 	// Actual execution logic would go here, probably calling back into cognition

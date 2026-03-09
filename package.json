@@ -1,0 +1,13 @@
+{
+  "name": "orion-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "build:css": "tailwindcss -i input.css -o assets/css/output.css",
+    "watch:css": "tailwindcss -i input.css -o assets/css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/cli": "^4.0.0",
+    "@iconify/tailwind": "^1.0.0"
+  }
+}

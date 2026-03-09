@@ -1,0 +1,5 @@
+requirements:
+  - id: UI_STACK_CORRECTION
+    description: Correct the frontend/UI stack to match canonical Wails + Tailwind v4 + HTMX stack.
+    priority: CRITICAL
+    status: PENDING

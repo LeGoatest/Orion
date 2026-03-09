@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	sitter "github.com/smacker/go-tree-sitter"
 	"orion/internal/code/parser"
+	sitter "github.com/smacker/go-tree-sitter"
 )
 
 type Extractor struct {
@@ -18,8 +18,7 @@ func NewExtractor(p *parser.CodeParser) *Extractor {
 
 // Extract parses source code and identifies important symbols
 func (e *Extractor) Extract(ctx context.Context, filePath string, source []byte) ([]Symbol, error) {
-	lang := parser.Go // Default for now
-	tree, err := e.parser.Parse(ctx, lang, source)
+	tree, err := e.parser.Parse(ctx, source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse %s: %w", filePath, err)
 	}

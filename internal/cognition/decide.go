@@ -1,8 +1,6 @@
 package cognition
 
-import (
-	"fmt"
-)
+import ("fmt")
 
 func (ce *Engine) Decide(orientation interface{}) interface{} {
 	fmt.Println("Cognition: Phase [Decide]")

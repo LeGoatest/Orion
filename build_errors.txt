@@ -1,5 +1,0 @@
-internal/agents/agents.go:8:2: package orion/internal/types is not in std (/usr/local/go/src/orion/internal/types)
-package command-line-arguments
-	imports orion/internal/runtime from main.go
-	imports orion/internal/agents from kernel.go
-	imports orion/internal/runtime from agent.go: import cycle not allowed

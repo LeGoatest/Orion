@@ -1,8 +1,6 @@
 package cognition
 
-import (
-	"fmt"
-)
+import ("fmt")
 
 func (ce *Engine) Learn(results interface{}) {
 	fmt.Println("Cognition: Phase [Learn]")
