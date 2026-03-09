@@ -1,0 +1,7 @@
+internal/agents/agents.go:3:27: package orion/internal/types is not in std (/usr/local/go/src/orion/internal/types)
+package orion/cmd/orion
+	imports orion/internal/runtime from main.go
+	imports orion/internal/agents from kernel.go
+	imports orion/internal/runtime from agent.go: import cycle not allowed
+internal/code/indexer/indexer.go:9:2: no required module provides package github.com/smacker/go-tree-sitter/go; to add it:
+	go get github.com/smacker/go-tree-sitter/go

@@ -3,33 +3,55 @@ package indexer
 import (
 	"context"
 	"fmt"
-	"orion/internal/code/parser"
+	sitter "github.com/smacker/go-tree-sitter"
+	sitter_go "github.com/smacker/go-tree-sitter/go"
+	"orion/internal/storage/sqlite"
+	"os"
+	// sitter_py "github.com/smacker/go-tree-sitter/python"
+	// sitter_ts "github.com/smacker/go-tree-sitter/typescript"
+	// sitter_js "github.com/smacker/go-tree-sitter/javascript"
 )
 
-type CodeSymbol struct {
-	ID        string
-	Name      string
-	Type      string
-	FilePath  string
-	StartLine int
-	EndLine   int
-}
-
 type Indexer struct {
-	parser *parser.CodeParser
+	db *sqlite.DB
 }
 
-func NewIndexer(p *parser.CodeParser) *Indexer {
-	return &Indexer{parser: p}
+func NewIndexer(db *sqlite.DB) *Indexer {
+	return &Indexer{db: db}
 }
 
-func (idx *Indexer) IndexFile(ctx context.Context, filePath string, source []byte) error {
-	tree, err := idx.parser.Parse(ctx, source)
+func (idx *Indexer) IndexFile(ctx context.Context, filePath string) error {
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Indexed file: %s, root type: %s\n", filePath, tree.RootNode().Type())
-	// Logic to traverse tree and extract symbols
+	lang := idx.getLanguage(filePath)
+	if lang == nil {
+		return fmt.Errorf("unsupported language for %s", filePath)
+	}
+
+	parser := sitter.NewParser()
+	parser.SetLanguage(lang)
+
+	tree, err := parser.ParseCtx(ctx, nil, content)
+	if err != nil {
+		return err
+	}
+
+	root := tree.RootNode()
+	// Extract symbols from the root node and store in sqlite
+	fmt.Printf("Indexed file %s: %d nodes\n", filePath, root.ChildCount())
+
 	return nil
+}
+
+func (idx *Indexer) getLanguage(filePath string) *sitter.Language {
+	switch filepath.Ext(filePath) {
+	case ".go":
+		return sitter_go.GetLanguage()
+	// Other languages can be added here once their grammars are imported
+	default:
+		return nil
+	}
 }

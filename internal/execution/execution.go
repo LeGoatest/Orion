@@ -1,38 +1,62 @@
 package execution
 
-import "context"
-import "sync"
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"sync"
+)
 
-type Job interface { Execute(ctx context.Context) error; ID() string; Type() string }
-
-type WorkerPool struct {
-	maxWorkers int
-	jobQueue   chan Job
-	wg         sync.WaitGroup
+type Job interface {
+	Execute(ctx context.Context) error
+	ID() string
+	Type() string
 }
 
-func NewWorkerPool(mw int) *WorkerPool { return &WorkerPool{maxWorkers: mw, jobQueue: make(chan Job, 100)} }
+type WorkerPool struct {
+	max   int
+	queue chan Job
+	wg    sync.WaitGroup
+}
 
-func (wp *WorkerPool) Start(ctx context.Context) {
-	wp.wg.Add(wp.maxWorkers)
-	for i := 0; i < wp.maxWorkers; i++ {
-		go func() {
-			defer wp.wg.Done()
-			for {
-				select {
-				case job := <-wp.jobQueue:
-					fmt.Printf("Job %s (%s) started\n", job.ID(), job.Type())
-					if err := job.Execute(ctx); err != nil { fmt.Printf("Job failed: %v\n", err) }
-				case <-ctx.Done(): return
-				}
-			}
-		}()
+func NewWorkerPool(m int) *WorkerPool {
+	return &WorkerPool{
+		max:   m,
+		queue: make(chan Job, 100),
 	}
 }
 
-func (wp *WorkerPool) Submit(job Job) { wp.jobQueue <- job }
+func (wp *WorkerPool) Start(ctx context.Context) {
+	wp.wg.Add(wp.max)
+	for i := 0; i < wp.max; i++ {
+		go func(id int) {
+			defer wp.wg.Done()
+			for {
+				select {
+				case j := <-wp.queue:
+					fmt.Printf("Worker %d: Job %s starting\n", id, j.ID())
+					if err := j.Execute(ctx); err != nil {
+						fmt.Printf("Worker %d: Job %s failed: %v\n", id, j.ID(), err)
+					}
+				case <-ctx.Done():
+					return
+				}
+			}
+		}(i)
+	}
+}
 
-type Scheduler struct { pool *WorkerPool }
-func NewScheduler(p *WorkerPool) *Scheduler { return &Scheduler{pool: p} }
-func (s *Scheduler) Schedule(job Job) { s.pool.Submit(job) }
+func (wp *WorkerPool) Submit(j Job) {
+	wp.queue <- j
+}
+
+type Scheduler struct {
+	pool *WorkerPool
+}
+
+func NewScheduler(p *WorkerPool) *Scheduler {
+	return &Scheduler{pool: p}
+}
+
+func (s *Scheduler) Schedule(j Job) {
+	s.pool.Submit(j)
+}

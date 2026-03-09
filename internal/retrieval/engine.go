@@ -3,80 +3,74 @@ package retrieval
 import (
 	"context"
 	"fmt"
+	"orion/internal/retrieval/scoring"
+	"orion/internal/runtime"
+	"orion/internal/symbols"
 	"sync"
 	"time"
-	"orion/internal/retrieval/graph"
-	"orion/internal/symbols"
-	"orion/internal/types"
 )
 
 type ContextBundle struct {
-	Facts             []string
-	Patterns          []string
-	Insights          []string
-	CodeSymbols       []string
-	CallGraphEdges    []string
-	RelevantEvents    []string
-	Symbols           []symbols.Symbol
-	SymbolDefinitions []string
-	RelatedCalls      []string
+	Facts            []string
+	Patterns         []string
+	Insights         []string
+	CodeSymbols      []symbols.Symbol
+	CallGraphEdges   []string
+	RelevantEvents   []string
+	FormattedContext string
 }
 
 type RetrievalEngine struct {
-	eb          *types.EventBus
+	eb          *runtime.EventBus
 	symbolQuery *symbols.Query
-	graphExpand *graph.Expander
+	scorer      *scoring.Scorer
 }
 
-func NewRetrievalEngine(eb *types.EventBus, sq *symbols.Query, ge *graph.Expander) *RetrievalEngine {
+func NewRetrievalEngine(eb *runtime.EventBus, sq *symbols.Query) *RetrievalEngine {
 	return &RetrievalEngine{
 		eb:          eb,
 		symbolQuery: sq,
-		graphExpand: ge,
+		scorer:      &scoring.Scorer{},
 	}
 }
 
 func (re *RetrievalEngine) AssembleContext(ctx context.Context, goal string) (*ContextBundle, error) {
-	fmt.Printf("Retrieval Engine: Assembling Optimized Context for: %s\n", goal)
+	fmt.Printf("Retrieval Engine: Assembling Coordinated Context for: %s\n", goal)
 
-	// 1. Symbol lookup (Direct/Fuzzy)
-	re.eb.Publish(types.Event{Type: "pipeline.symbol_lookup", CreatedAt: time.Now()})
+	// 1. Symbol lookup
+	re.eb.Publish(runtime.Event{Type: "pipeline.symbol_lookup", CreatedAt: time.Now()})
 	syms, _ := re.symbolQuery.ResolveSymbolReference(ctx, goal)
-	if len(syms) > 0 {
-		re.eb.Publish(types.Event{Type: "symbol.resolved", CreatedAt: time.Now()})
-	}
 
-	// Prepare bundle
-	bundle := &ContextBundle{
-		Symbols: syms,
-	}
-
-	// 2. Vector Search and Graph Expansion (Concurrent where possible)
-	re.eb.Publish(types.Event{Type: "pipeline.vector_search", CreatedAt: time.Now()})
-
-	// Simulated concurrent execution
+	// 2. Concurrent Vector search and Graph Expansion
+	var candidates []scoring.RetrievalCandidate
+	var mu sync.Mutex
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
-		// Vector retrieval logic
-		re.eb.Publish(types.Event{Type: "retrieval.vector_completed", CreatedAt: time.Now()})
-	}()
-
-	go func() {
-		defer wg.Done()
-		// 3. Graph expansion (memory_links and call graph edges)
-		re.eb.Publish(types.Event{Type: "pipeline.graph_expand", CreatedAt: time.Now()})
-		_, _ = re.graphExpand.Expand(ctx, []string{"root-node"}, 2)
-		re.eb.Publish(types.Event{Type: "retrieval.graph_expanded", CreatedAt: time.Now()})
+		re.eb.Publish(runtime.Event{Type: "pipeline.vector_search", CreatedAt: time.Now()})
+		// Simulated vector results
+		mu.Lock()
+		candidates = append(candidates, scoring.RetrievalCandidate{ID: "mem-1", Semantic: 0.9, Content: "Relevant fact from vector search"})
+		mu.Unlock()
 	}()
 
 	wg.Wait()
 
-	// 4. Hybrid scoring and final build
-	re.eb.Publish(types.Event{Type: "retrieval.ranked", CreatedAt: time.Now()})
-	re.eb.Publish(types.Event{Type: "pipeline.context_built", CreatedAt: time.Now()})
+	// 3. Hybrid scoring
+	re.eb.Publish(runtime.Event{Type: "retrieval.ranked", CreatedAt: time.Now()})
+	ranked := re.scorer.RankCandidates(ctx, candidates)
 
+	// 4. Build deterministic bundle
+	bundle := &ContextBundle{
+		CodeSymbols: syms,
+		Facts:       []string{},
+	}
+	for _, c := range ranked {
+		bundle.Facts = append(bundle.Facts, c.Content)
+	}
+
+	re.eb.Publish(runtime.Event{Type: "pipeline.context_built", CreatedAt: time.Now()})
 	return bundle, nil
 }

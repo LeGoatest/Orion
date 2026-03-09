@@ -2,56 +2,41 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-
 	"orion/internal/runtime"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	fmt.Println("#########################################")
-	fmt.Println("# Orion Coordinated Cognitive Runtime #")
-	fmt.Println("#########################################")
-
+	fmt.Println("Orion Cognitive Runtime starting...")
 	dataDir := os.Getenv("ORION_DATA_DIR")
 	if dataDir == "" {
 		dataDir = "data"
 	}
-
-	// 1. Initialize the Kernel (wires up dispatcher, event bus, storage)
-	kernel, err := runtime.NewKernel(dataDir)
+	k, err := runtime.NewKernel(dataDir)
 	if err != nil {
-		log.Fatalf("Critical Failure: failed to initialize kernel: %v", err)
+		fmt.Printf("Fatal: %v\n", err)
+		os.Exit(1)
 	}
-
-	// 2. Register Agents and Stage Ownership
-	ar := kernel.Dispatcher.Registry
-	ar.RegisterAgent(&runtime.ConversationAgent{})
-	ar.RegisterAgent(&runtime.SymbolLookupAgent{})
-	ar.RegisterAgent(&runtime.PlannerAgent{})
-	ar.RegisterAgent(&runtime.RetrievalAgent{})
-	ar.RegisterAgent(&runtime.MemoryGardenerAgent{})
-	ar.RegisterAgent(&runtime.CodeIndexerAgent{})
-	ar.RegisterAgent(&runtime.PatternDetectorAgent{})
-
-	// 3. Start Multi-Agent System
-	kernel.Start()
-
-	// 4. Trigger Goal Injection (Bootstrap Simulation)
-	ctx := kernel.Context()
-	testGoalID := "goal-coordinated-001"
-	testDesc := "Analyze the current multi-agent coordination performance"
-
-	fmt.Printf("Submitting Test Goal: %s\n", testDesc)
-	if err := kernel.Cognition.Process(ctx, testGoalID, testDesc); err != nil {
-		fmt.Printf("Initial dispatch failed: %v\n", err)
-	}
-
-	fmt.Println("Orion Coordinated Runtime is running.")
-
-	// Keep running to allow agent jobs to process
+	k.Supervisor.Reg.RegisterAgent(&runtime.ConversationAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.SymbolLookupAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.PlannerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.RetrievalAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.ToolExecutionAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.AnalysisAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.CodeIndexerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.MemoryGardenerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Supervisor.Reg.RegisterAgent(&runtime.PatternDetectorAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	k.Start()
+	fmt.Println("Runtime operational.")
+	go func() { k.Cognition.Process(k.Context(), "goal-1", "Harden the coordination runtime") }()
+	s := make(chan os.Signal, 1)
+	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 	select {
-	case <-ctx.Done():
-		fmt.Println("Runtime terminated.")
+	case <-s:
+		k.Shutdown()
+	case <-k.Context().Done():
 	}
+	fmt.Println("Shutdown complete.")
 }
