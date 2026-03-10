@@ -1,9 +1,6 @@
 package workspace
 
-import "database/sql"
-import "path/filepath"
-import "os"
-import "orion/internal/storage/sqlite"
+import ("database/sql"; "path/filepath"; "os"; "orion/internal/storage/sqlite")
 
 type Manager struct { db *sql.DB; dir string }
 func NewManager(db *sql.DB, d string) *Manager { return &Manager{db: db, dir: d} }

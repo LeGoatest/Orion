@@ -1,29 +1,31 @@
 package scoring
 
-import "context"
+import (
+	"orion/internal/storage/sqlite"
+)
 
-type RetrievalCandidate struct {
-	ID         string
-	Semantic   float64
-	Graph      float64
-	Temporal   float64
-	Usage      float64
-	Importance float64
+type Scorer struct {
+	db *sqlite.DB
 }
 
-type Scorer struct{}
-
-func (s *Scorer) CalculateHybridScore(c RetrievalCandidate) float64 {
-	// Orion hybrid ranking formula:
-	// score = 0.55*semantic + 0.15*graph + 0.15*temporal + 0.10*usage + 0.05*importance
-	return (0.55 * c.Semantic) +
-		(0.15 * c.Graph) +
-		(0.15 * c.Temporal) +
-		(0.10 * c.Usage) +
-		(0.05 * c.Importance)
+func NewScorer(db *sqlite.DB) *Scorer {
+	return &Scorer{db: db}
 }
 
-func (s *Scorer) RankCandidates(ctx context.Context, candidates []RetrievalCandidate) []RetrievalCandidate {
-	// Logic to sort candidates by hybrid score
-	return candidates
+type Factors struct {
+	Semantic   float32
+	Graph      float32
+	Temporal   float32
+	Usage      float32
+	Importance float32
+}
+
+func (s *Scorer) Calculate(f Factors) float32 {
+	// Orion Hybrid Scoring formula:
+	// score = 0.55 semantic + 0.15 graph + 0.15 temporal + 0.10 usage + 0.05 importance
+	return (0.55 * f.Semantic) +
+	       (0.15 * f.Graph) +
+	       (0.15 * f.Temporal) +
+	       (0.10 * f.Usage) +
+	       (0.05 * f.Importance)
 }
