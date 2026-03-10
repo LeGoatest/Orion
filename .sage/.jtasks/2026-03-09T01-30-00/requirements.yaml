@@ -1,0 +1,13 @@
+requirements:
+  - id: REMOVE_FYNE
+    description: Remove Fyne dependency and any residual Fyne code.
+    priority: CRITICAL
+    status: PENDING
+  - id: STACK_ALIGNMENT
+    description: Align stack with Wails, Chi, Ent, and SvelteKit.
+    priority: CRITICAL
+    status: PENDING
+  - id: RUNTIME_HARDENING
+    description: Harden goal/job persistence, transactions, event bus, and supervisor.
+    priority: CRITICAL
+    status: PENDING
