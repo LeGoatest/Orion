@@ -24,8 +24,8 @@ func (c *Client) RequestPlan(ctx context.Context, envelope *prompt.Envelope) (*R
 	resp, err := c.provider.Plan(ctx, envelope)
 	if err != nil {
 		c.eb.Publish(types.Event{
-			Type:    "llm.failed",
-			Payload: map[string]string{"error": err.Error()},
+			Type:      "llm.failed",
+			Payload:   map[string]string{"error": err.Error()},
 			CreatedAt: time.Now(),
 		})
 		return nil, fmt.Errorf("llm plan request failed: %w", err)

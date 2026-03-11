@@ -11,15 +11,15 @@ import (
 
 // MemoryNode represents an atom of knowledge in Orion
 type MemoryNode struct {
-	ID          string    `json:"id"`
-	Type        string    `json:"type"` // fact, insight, pattern, tool_result, event, summary
-	Content     string    `json:"content"`
-	Importance  float64   `json:"importance"`
-	UsageCount  int       `json:"usage_count"`
-	Archived    bool      `json:"archived"`
-	Metadata    string    `json:"metadata"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
+	Type       string    `json:"type"` // fact, insight, pattern, tool_result, event, summary
+	Content    string    `json:"content"`
+	Importance float64   `json:"importance"`
+	UsageCount int       `json:"usage_count"`
+	Archived   bool      `json:"archived"`
+	Metadata   string    `json:"metadata"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // MemoryLink represents a relationship between memory nodes

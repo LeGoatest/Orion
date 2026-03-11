@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"orion/internal/runtime"
 	"os"
 	"os/signal"
 	"syscall"
-	"orion/internal/runtime"
 )
 
 func main() {
@@ -33,16 +33,7 @@ func main() {
 	k.Supervisor.Reg.RegisterAgent(&runtime.PatternDetectorAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
 
 	k.Start()
-	fmt.Println("Runtime operational.")
-
-	// Initial bootstrap goal
-	go func() {
-		k.Cognition.Process(k.Context(), "goal-1", "Harden the coordination runtime")
-	}()
-
-	// Wails UI placeholder: In a production Wails app,
-	// this is where wails.Run() would be called.
-	// For now, we maintain the Go runtime loop.
+	fmt.Println("Runtime operational. Listening on :8080")
 
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)

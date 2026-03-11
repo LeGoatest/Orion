@@ -1,6 +1,8 @@
 package cognition
 
-import ("fmt")
+import (
+	"fmt"
+)
 
 func (ce *Engine) Observe(intent string) interface{} {
 	fmt.Println("Cognition: Phase [Observe]")
