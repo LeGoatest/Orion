@@ -3,22 +3,22 @@ package retrieval
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 	"orion/internal/retrieval/graph"
+	"orion/internal/retrieval/scoring"
 	"orion/internal/symbols"
 	"orion/internal/types"
-	"orion/internal/retrieval/scoring"
+	"sync"
+	"time"
 )
 
 type ContextBundle struct {
-	Facts             []string
-	Patterns          []string
-	Insights          []string
-	CodeSymbols       []symbols.Symbol
-	CallGraphEdges    []string
-	RelevantEvents    []string
-	FormattedContext  string
+	Facts            []string
+	Patterns         []string
+	Insights         []string
+	CodeSymbols      []symbols.Symbol
+	CallGraphEdges   []string
+	RelevantEvents   []string
+	FormattedContext string
 }
 
 type RetrievalEngine struct {

@@ -3,8 +3,8 @@ package embedding
 import (
 	"context"
 	"fmt"
-	"sync"
 	"orion/internal/types"
+	"sync"
 )
 
 // Service coordinates embedding generation and persistence
@@ -42,21 +42,21 @@ func (s *Service) Start(ctx context.Context) {
 
 func (s *Service) processJob(ctx context.Context, job Job) {
 	s.eb.Publish(types.Event{
-		Type: "embedding.requested",
+		Type:    "embedding.requested",
 		Payload: map[string]string{"job_id": job.ID()},
 	})
 
 	err := job.Execute(ctx, s.provider)
 	if err != nil {
 		s.eb.Publish(types.Event{
-			Type: "embedding.failed",
+			Type:    "embedding.failed",
 			Payload: map[string]string{"job_id": job.ID(), "error": err.Error()},
 		})
 		return
 	}
 
 	s.eb.Publish(types.Event{
-		Type: "embedding.completed",
+		Type:    "embedding.completed",
 		Payload: map[string]string{"job_id": job.ID()},
 	})
 }

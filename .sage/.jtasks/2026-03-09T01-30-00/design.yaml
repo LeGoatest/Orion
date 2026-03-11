@@ -1,0 +1,7 @@
+design:
+  desktop_shell: Wails
+  api_layer: Chi router in internal/api/
+  orm_layer: Ent
+  frontend_stack: SvelteKit + Vite + Tailwind v4
+  interaction_layer: SvelteKit with optional HTMX/SSE
+  persistence: Transactional SQLite stage transitions

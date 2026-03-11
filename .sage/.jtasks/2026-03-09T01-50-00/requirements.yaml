@@ -1,0 +1,13 @@
+requirements:
+  - id: FINAL_STACK_ALIGNMENT
+    description: Align CSS output paths, package scripts, and Iconify configuration.
+    priority: CRITICAL
+    status: PENDING
+  - id: FRONTEND_HARDENING
+    description: Finalize SvelteKit integration and ensure Wails shell coherence.
+    priority: CRITICAL
+    status: PENDING
+  - id: RUNTIME_HARDENING_PATCH
+    description: Patch any missing transactional logic and event bus slow-consumer handling.
+    priority: HIGH
+    status: PENDING

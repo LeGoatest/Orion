@@ -29,7 +29,7 @@ func (b *Builder) BuildContext(ctx context.Context, bundle *retrieval.ContextBun
 	env.Sections[CallGraphSection] = b.formatList(bundle.CallGraphEdges)
 
 	b.eb.Publish(types.Event{
-		Type: "prompt.context_built",
+		Type:      "prompt.context_built",
 		CreatedAt: time.Now(),
 	})
 

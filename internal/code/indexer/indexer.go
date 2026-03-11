@@ -3,10 +3,10 @@ package code
 import (
 	"context"
 	"fmt"
-	"os"
-	"orion/internal/storage/sqlite"
 	sitter "github.com/smacker/go-tree-sitter"
 	sitter_go "github.com/smacker/go-tree-sitter/go"
+	"orion/internal/storage/sqlite"
+	"os"
 	// sitter_py "github.com/smacker/go-tree-sitter/python"
 	// sitter_ts "github.com/smacker/go-tree-sitter/typescript"
 	// sitter_js "github.com/smacker/go-tree-sitter/javascript"

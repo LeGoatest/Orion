@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"orion/internal/code/parser"
 	sitter "github.com/smacker/go-tree-sitter"
+	"orion/internal/code/parser"
 )
 
 type Extractor struct {
