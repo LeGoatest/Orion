@@ -1,0 +1,34 @@
+- id: SPEC_CONTEXT_ARTIFACTS_REQUIRED
+  type: rule
+  effect: require
+  condition: >
+    When ENTER_SPEC_MODE is active, output includes one or more deterministic spec artifacts
+    such as requirements.md, design.md, tasks.md, or HANDOVER.md.
+  message: >
+    Spec Mode requires deterministic specification artifacts.
+
+- id: SPEC_CONTEXT_ACCEPTANCE_CRITERIA_REQUIRED
+  type: rule
+  effect: require
+  condition: >
+    Spec Mode output defines acceptance criteria, affected components, and bounded scope.
+  message: >
+    Spec Mode must define acceptance criteria, affected components, and scope.
+
+- id: SPEC_CONTEXT_NO_FILE_EDITS
+  type: rule
+  effect: deny
+  condition: >
+    Spec Mode output includes file edits, write operations, delete operations,
+    or direct implementation changes.
+  message: >
+    Spec Mode forbids file edits and direct implementation.
+
+- id: SPEC_CONTEXT_NO_ARCH_REINTERPRETATION
+  type: rule
+  effect: deny
+  condition: >
+    Spec Mode output reinterprets architecture, relaxes constraints, or introduces
+    undocumented patterns.
+  message: >
+    Spec Mode must preserve architecture and constraints.
