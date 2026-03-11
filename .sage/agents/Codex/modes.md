@@ -12,7 +12,7 @@ If conflict exists, canon rules prevail.
 
 This document defines how Codex must behave when a mode is requested.
 
-This file is non-canonical unless explicitly referenced by `canon/`.
+This file is non-canonical unless explicitly referenced by `canon/`.  
 If conflict exists, `canon/` prevails.
 
 ---
@@ -21,15 +21,65 @@ If conflict exists, `canon/` prevails.
 
 The following tokens activate modes:
 
+- ENTER_DISCUSS_MODE
+- ENTER_PLANNING_MODE
 - ENTER_DEEP_GOVERNANCE_MODE
 - ENTER_SPEC_MODE
 - ENTER_EXEC_MODE
 
 If multiple tokens appear, precedence order is:
 
-Deep → Spec → Exec
+Deep → Spec → Exec → Planning → Discuss
 
-Higher mode suppresses lower modes.
+Higher-precedence modes suppress lower-precedence modes.
+
+---
+
+## Discuss Mode
+
+Purpose:
+Open exploration and clarification of ideas before formal validation or planning.
+
+Allowed Outputs:
+
+- questions
+- idea exploration
+- conceptual discussion
+- problem framing
+- clarification of requirements
+
+Forbidden:
+
+- file edits
+- implementation steps
+- canon mutation
+- architectural changes
+
+Discuss Mode does not alter system state.
+
+---
+
+## Planning Mode
+
+Purpose:
+Outline a rough execution approach prior to formal specification.
+
+Allowed Outputs:
+
+- high-level plans
+- task outlines
+- component identification
+- rough sequencing
+- dependency identification
+
+Forbidden:
+
+- file edits
+- execution steps
+- canon mutation
+- architectural reinterpretation
+
+Planning Mode is advisory and non-binding.
 
 ---
 
