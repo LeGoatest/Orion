@@ -1,4 +1,4 @@
-version: 2
+version: 003
 kind: modes_contract
 
 scope:
@@ -8,7 +8,7 @@ scope:
 
 artifacts:
   root: ".sage/.jtasks"
-  task_directory_pattern: "<task-id>"
+  stage_directory_pattern: "stage-<n>"
   filename_pattern: "<artifact-type>-<iso-run>.<ext>"
 
 invocation:
@@ -35,6 +35,105 @@ invocation:
       - spec
       - execution
 
+mode_rule_files:
+  discuss: discuss_context_rules.yaml
+  planning: planning_context_rules.yaml
+  deep_governance: deep_governance_context_rules.yaml
+  spec: spec_context_rules.yaml
+  execution: execution_context_rules.yaml
+
+modes:
+
+  discuss:
+    purpose: exploratory_discussion
+    output_directory: ".sage/.jtasks/stage-<n>/"
+    generated_artifacts:
+      - "discussion-<iso-run>.yaml"
+    forbidden_outputs:
+      - file_edits
+      - canon_mutation
+
+  planning:
+    purpose: deterministic_repo_planning
+    output_directory: ".sage/.jtasks/stage-<n>/"
+    generated_artifacts:
+      - "planning-<iso-run>.yaml"
+    forbidden_outputs:
+      - file_edits
+      - canon_mutation
+
+  deep_governance:
+    purpose: constitutional_validation
+    output_directory: ".sage/.jtasks/stage-<n>/"
+    generated_artifacts:
+      - "governance-<iso-run>.yaml"
+    allowed_outputs:
+      - risks
+      - rule_citations
+      - conflict_explanations
+      - structural_impact_analysis
+      - verdict
+    forbidden_outputs:
+      - implementation_steps
+      - file_edits
+      - speculative_architecture
+
+  spec:
+    purpose: deterministic_task_specification
+    output_directory: ".sage/.jtasks/stage-<n>/"
+    generated_artifacts:
+      - "context_manifest-<iso-run>.yaml"
+      - "requirements-<iso-run>.yaml"
+      - "design-<iso-run>.yaml"
+      - "tasks-<iso-run>.yaml"
+    forbidden_outputs:
+      - file_edits
+      - canon_mutation
+
+  execution:
+    purpose: deterministic_task_execution
+    output_directory: ".sage/.jtasks/stage-<n>/"
+    required_inputs:
+      - "tasks-<iso-run>.yaml"
+    execution_source: ".sage/.jtasks/stage-<n>/tasks-<iso-run>.yaml"
+    allowed_outputs:
+      - file_edits
+      - minimal_supporting_code
+      - validation_results
+      - "GAP_REPORT-<iso-run>.md"
+    forbidden_outputs:
+      - altering_architecture_without_spec
+      - expanding_scope_beyond_tasks
+      - unauthorized_canon_mutation
+
+canon_mutation:
+  rule: canon_is_immutable_by_default
+  allowed_only_if:
+    - deep_governance_completed
+    - risks_analyzed
+    - spec_declares_mutation
+    - human_approval_recorded
+    - mutation_scope_declared
+
+hitl:
+  marker: "[AWAIT_HUMAN_VALIDATION]"
+  behavior:
+    halt_execution: true
+    marker_must_be_alone_on_line: true
+  triggers:
+    - canon_conflict
+    - ambiguous_mode_invocation
+    - security_boundary_change
+    - spec_approval_missing
+    - unauthorized_mutation
+    - governance_drift_detected
+
+determinism:
+  guarantees:
+    - prevent_cross_mode_leakage
+    - prevent_speculative_execution
+    - prevent_silent_governance_mutation
+    - ensure_reproducible_behavior_across_sessions
 mode_rule_files:
   discuss: discuss_context_rules.yaml
   planning: planning_context_rules.yaml
