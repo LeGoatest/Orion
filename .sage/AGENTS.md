@@ -95,3 +95,13 @@ Jules behavior conventions may be defined in:
 - `agents/Jules/modes.md`
 
 These are guidance documents unless canon references them.
+
+ ---
+
+ ## Codex-Specific Notes
+
+Codex behavior conventions may be defined in:
+- `agents/Codex/Codex.md`
+- `agents/Codex/modes.md`
+
+These are guidance documents unless canon references them.

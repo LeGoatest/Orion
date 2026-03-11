@@ -1,0 +1,42 @@
+- id: EXECUTION_CONTEXT_TASKS_REQUIRED
+  type: rule
+  effect: require
+  condition: >
+    When ENTER_EXEC_MODE is active, execution is bounded by an approved tasks.md
+    or equivalent explicit task definition in the current request lifecycle.
+  message: >
+    Execution Mode requires an approved task definition before implementation.
+
+- id: EXECUTION_CONTEXT_MINIMAL_CHANGE
+  type: rule
+  effect: require
+  condition: >
+    Execution Mode applies the smallest correct change necessary to satisfy the task.
+  message: >
+    Execution Mode must prefer minimal correct changes.
+
+- id: EXECUTION_CONTEXT_NO_SCOPE_EXPANSION
+  type: rule
+  effect: deny
+  condition: >
+    Execution Mode expands scope beyond tasks.md or the explicitly approved request.
+  message: >
+    Execution Mode must remain bounded to approved scope.
+
+- id: EXECUTION_CONTEXT_NO_UNAUTHORIZED_CANON_MUTATION
+  type: rule
+  effect: deny
+  condition: >
+    Execution Mode modifies canon without prior Deep Governance, explicit Spec declaration,
+    and recorded human approval.
+  message: >
+    Canon mutation during Execution Mode is forbidden without formal authorization.
+
+- id: EXECUTION_CONTEXT_VALIDATION_REQUIRED
+  type: rule
+  effect: require
+  condition: >
+    Execution Mode reports relevant validation performed when tests, build, lint,
+    or formatting checks are available.
+  message: >
+    Execution Mode should report relevant validation when available.
