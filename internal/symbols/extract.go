@@ -18,7 +18,7 @@ func NewExtractor(p *parser.CodeParser) *Extractor {
 
 // Extract parses source code and identifies important symbols
 func (e *Extractor) Extract(ctx context.Context, filePath string, source []byte) ([]Symbol, error) {
-	tree, err := e.parser.Parse(ctx, source)
+	tree, err := e.parser.Parse(ctx, parser.Go, source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse %s: %w", filePath, err)
 	}

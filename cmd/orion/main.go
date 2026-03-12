@@ -1,46 +1,51 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"orion/ent"
 	"orion/internal/runtime"
 	"os"
-	"os/signal"
-	"syscall"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	fmt.Println("Orion Cognitive Runtime starting...")
-	dataDir := os.Getenv("ORION_DATA_DIR")
-	if dataDir == "" {
-		dataDir = "data"
+	// 1. Initialize Global DB
+	if err := os.MkdirAll("data", 0755); err != nil {
+		log.Fatalf("failed to create data dir: %v", err)
 	}
-
-	k, err := runtime.NewKernel(dataDir)
+	client, err := ent.Open("sqlite3", "file:data/orion.db?cache=shared&_fk=1")
 	if err != nil {
-		fmt.Printf("Fatal: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed opening connection to sqlite: %v", err)
+	}
+	defer client.Close()
+
+	if err := client.Schema.Create(context.Background()); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
-	// Register specialized agents
-	k.Supervisor.Reg.RegisterAgent(&runtime.ConversationAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.SymbolLookupAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.PlannerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.RetrievalAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.ToolExecutionAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.AnalysisAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.CodeIndexerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.MemoryGardenerAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
-	k.Supervisor.Reg.RegisterAgent(&runtime.PatternDetectorAgent{BaseAgent: runtime.BaseAgent{EventBus: k.EventBus}})
+	// 2. Initialize Kernel
+	k := runtime.NewKernel(client, "data")
 
+	// 3. Bootstrap Kernel
+	if err := k.Bootstrap(); err != nil {
+		log.Fatalf("failed to bootstrap kernel: %v", err)
+	}
+
+	fmt.Println("Orion Cognitive Runtime Kernel started.")
 	k.Start()
-	fmt.Println("Runtime operational. Listening on :8080")
 
-	s := make(chan os.Signal, 1)
-	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
+	fmt.Println("Press Ctrl+C to shut down.")
+
 	select {
-	case <-s:
-		k.Shutdown()
 	case <-k.Context().Done():
+		fmt.Println("Kernel context cancelled.")
+	case <-os.Interrupt:
+		fmt.Println("Interrupt received.")
 	}
-	fmt.Println("Shutdown complete.")
+
+	k.Shutdown()
+	fmt.Println("Orion shutdown complete.")
 }
