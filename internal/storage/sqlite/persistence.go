@@ -4,7 +4,6 @@ import (
 	"context"
 	"orion/ent"
 	"orion/ent/goal"
-	"orion/ent/job"
 	"time"
 )
 

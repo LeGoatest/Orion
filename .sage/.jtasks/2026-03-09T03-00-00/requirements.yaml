@@ -1,0 +1,21 @@
+requirements:
+  - id: ORIENT_SITUATIONAL_AWARENESS
+    description: Refactor Orient stage to produce a structured SituationalModel.
+    priority: CRITICAL
+    status: PENDING
+  - id: DECIDE_SITUATIONAL_CONSUMPTION
+    description: Update Decide stage to consume the SituationalModel.
+    priority: CRITICAL
+    status: PENDING
+  - id: SAGE_GOVERNANCE_GATE
+    description: Wire SAGE governance as an explicit validation gate before the Act stage.
+    priority: CRITICAL
+    status: PENDING
+  - id: LEARN_OUTCOME_PERSISTENCE
+    description: Ensure Learn stage persists outcome data for future orientation improvement.
+    priority: HIGH
+    status: PENDING
+  - id: RUNTIME_MODEL_CONSISTENCY
+    description: Reconcile duplicated or conflicting goal/stage model definitions.
+    priority: MEDIUM
+    status: PENDING

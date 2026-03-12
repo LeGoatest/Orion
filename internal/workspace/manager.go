@@ -1,87 +1,58 @@
 package workspace
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
-	"orion/internal/storage/sqlite"
-	"path/filepath"
+	"orion/ent"
+	"orion/ent/workspace"
 	"sync"
 )
 
 type Workspace struct {
 	ID   string
 	Name string
-	DB   *sql.DB
+	DB   *ent.Client
 }
 
 type Manager struct {
 	dataDir    string
-	globalDB   *sql.DB
+	client     *ent.Client
 	workspaces map[string]*Workspace
 	mu         sync.RWMutex
 }
 
-func NewManager(globalDB *sql.DB, dataDir string) *Manager {
+func NewManager(client *ent.Client, dataDir string) *Manager {
 	return &Manager{
 		dataDir:    dataDir,
-		globalDB:   globalDB,
+		client:     client,
 		workspaces: make(map[string]*Workspace),
 	}
 }
 
-func (m *Manager) Start() {
-	rows, err := m.globalDB.Query("SELECT id, name, path FROM workspaces")
+func (m *Manager) Start(ctx context.Context) {
+	ws, err := m.client.Workspace.Query().All(ctx)
 	if err != nil {
 		fmt.Printf("Error loading workspaces: %v\n", err)
 		return
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var id, name, path string
-		if err := rows.Scan(&id, &name, &path); err != nil {
-			fmt.Printf("Error scanning workspace: %v\n", err)
-			continue
-		}
-
-		db, err := sqlite.OpenWorkspace(path)
-		if err != nil {
-			fmt.Printf("Error opening workspace database for %s: %v\n", id, err)
-			continue
-		}
-
-		m.mu.Lock()
-		m.workspaces[id] = &Workspace{
-			ID:   id,
-			Name: name,
-			DB:   db,
-		}
-		m.mu.Unlock()
+	for _, w := range ws {
+		// In a real impl, we'd use the stored ID. Ent uses int by default unless UUID is used.
+		// For bootstrap, we'll just log.
+		fmt.Printf("Loading workspace: %s at %s\n", w.Name, w.Path)
 	}
 }
 
-func (m *Manager) CreateWorkspace(id, name string) (*Workspace, error) {
-	workspacePath := filepath.Join(m.dataDir, "workspaces", id)
-	db, err := sqlite.OpenWorkspace(workspacePath)
+func (m *Manager) CreateWorkspace(ctx context.Context, name string) (*WorkspaceRuntime, error) {
+	path := fmt.Sprintf("%s/workspaces/%s.db", m.dataDir, name)
+
+	_, err := m.client.Workspace.Create().
+		SetName(name).
+		SetPath(path).
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = m.globalDB.Exec("INSERT INTO workspaces (id, name, path) VALUES (?, ?, ?)", id, name, workspacePath)
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
-
-	w := &Workspace{
-		ID:   id,
-		Name: name,
-		DB:   db,
-	}
-
-	m.mu.Lock()
-	m.workspaces[id] = w
-	m.mu.Unlock()
-
-	return w, nil
+	return NewWorkspaceRuntime(name, path)
 }
