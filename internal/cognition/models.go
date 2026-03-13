@@ -33,6 +33,13 @@ type ExecutionPlan struct {
 	Tools  []string
 }
 
+type ValidatedExecutionPlan struct {
+	Plan              *ExecutionPlan
+	Disposition       string // approved, rejected, requires_revision
+	ValidationReason  string
+	ValidatedAt       time.Time
+}
+
 type OutcomeRecord struct {
 	GoalID    string
 	Success   bool
