@@ -4,7 +4,10 @@ package ent
 
 import (
 	"orion/ent/goal"
+	"orion/ent/goalevent"
 	"orion/ent/job"
+	"orion/ent/memorynode"
+	"orion/ent/pattern"
 	"orion/ent/schema"
 	"time"
 )
@@ -33,12 +36,14 @@ func init() {
 	goal.DefaultUpdatedAt = goalDescUpdatedAt.Default.(func() time.Time)
 	// goal.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	goal.UpdateDefaultUpdatedAt = goalDescUpdatedAt.UpdateDefault.(func() time.Time)
+	goaleventFields := schema.GoalEvent{}.Fields()
+	_ = goaleventFields
+	// goaleventDescCreatedAt is the schema descriptor for created_at field.
+	goaleventDescCreatedAt := goaleventFields[2].Descriptor()
+	// goalevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	goalevent.DefaultCreatedAt = goaleventDescCreatedAt.Default.(func() time.Time)
 	jobFields := schema.Job{}.Fields()
 	_ = jobFields
-	// jobDescStatus is the schema descriptor for status field.
-	jobDescStatus := jobFields[4].Descriptor()
-	// job.DefaultStatus holds the default value on creation for the status field.
-	job.DefaultStatus = jobDescStatus.Default.(string)
 	// jobDescRetryCount is the schema descriptor for retry_count field.
 	jobDescRetryCount := jobFields[5].Descriptor()
 	// job.DefaultRetryCount holds the default value on creation for the retry_count field.
@@ -47,4 +52,34 @@ func init() {
 	jobDescCreatedAt := jobFields[6].Descriptor()
 	// job.DefaultCreatedAt holds the default value on creation for the created_at field.
 	job.DefaultCreatedAt = jobDescCreatedAt.Default.(func() time.Time)
+	memorynodeFields := schema.MemoryNode{}.Fields()
+	_ = memorynodeFields
+	// memorynodeDescImportance is the schema descriptor for importance field.
+	memorynodeDescImportance := memorynodeFields[2].Descriptor()
+	// memorynode.DefaultImportance holds the default value on creation for the importance field.
+	memorynode.DefaultImportance = memorynodeDescImportance.Default.(float64)
+	// memorynodeDescUsageCount is the schema descriptor for usage_count field.
+	memorynodeDescUsageCount := memorynodeFields[3].Descriptor()
+	// memorynode.DefaultUsageCount holds the default value on creation for the usage_count field.
+	memorynode.DefaultUsageCount = memorynodeDescUsageCount.Default.(int)
+	// memorynodeDescArchived is the schema descriptor for archived field.
+	memorynodeDescArchived := memorynodeFields[4].Descriptor()
+	// memorynode.DefaultArchived holds the default value on creation for the archived field.
+	memorynode.DefaultArchived = memorynodeDescArchived.Default.(bool)
+	// memorynodeDescCreatedAt is the schema descriptor for created_at field.
+	memorynodeDescCreatedAt := memorynodeFields[5].Descriptor()
+	// memorynode.DefaultCreatedAt holds the default value on creation for the created_at field.
+	memorynode.DefaultCreatedAt = memorynodeDescCreatedAt.Default.(func() time.Time)
+	// memorynodeDescUpdatedAt is the schema descriptor for updated_at field.
+	memorynodeDescUpdatedAt := memorynodeFields[6].Descriptor()
+	// memorynode.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	memorynode.DefaultUpdatedAt = memorynodeDescUpdatedAt.Default.(func() time.Time)
+	// memorynode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	memorynode.UpdateDefaultUpdatedAt = memorynodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	patternFields := schema.Pattern{}.Fields()
+	_ = patternFields
+	// patternDescCreatedAt is the schema descriptor for created_at field.
+	patternDescCreatedAt := patternFields[3].Descriptor()
+	// pattern.DefaultCreatedAt holds the default value on creation for the created_at field.
+	pattern.DefaultCreatedAt = patternDescCreatedAt.Default.(func() time.Time)
 }

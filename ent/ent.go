@@ -6,8 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"orion/ent/codesymbol"
 	"orion/ent/goal"
+	"orion/ent/goalevent"
 	"orion/ent/job"
+	"orion/ent/memorynode"
+	"orion/ent/pattern"
+	"orion/ent/workspace"
 	"reflect"
 	"sync"
 
@@ -74,8 +79,13 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			goal.Table: goal.ValidColumn,
-			job.Table:  job.ValidColumn,
+			codesymbol.Table: codesymbol.ValidColumn,
+			goal.Table:       goal.ValidColumn,
+			goalevent.Table:  goalevent.ValidColumn,
+			job.Table:        job.ValidColumn,
+			memorynode.Table: memorynode.ValidColumn,
+			pattern.Table:    pattern.ValidColumn,
+			workspace.Table:  workspace.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

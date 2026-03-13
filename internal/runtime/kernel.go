@@ -10,19 +10,21 @@ import (
 	"orion/internal/types"
 	"orion/internal/agents"
 	"orion/internal/cognition"
+	"orion/internal/memory/gardener"
 )
 
 type Kernel struct {
-	ctx      context.Context
-	cancel   context.CancelFunc
-	EventBus *types.EventBus
-	Pool     *execution.WorkerPool
-	Scheduler *execution.Scheduler
-	DB       *ent.Client
+	ctx          context.Context
+	cancel       context.CancelFunc
+	EventBus     *types.EventBus
+	Pool         *execution.WorkerPool
+	Scheduler    *execution.Scheduler
+	DB           *ent.Client
 	WorkspaceMgr *workspace.Manager
-	Registry *agents.Registry
-	Engine   *cognition.Engine
-	mu       sync.Mutex
+	Registry     *agents.Registry
+	Engine       *cognition.Engine
+	Gardener     *gardener.Gardener
+	mu           sync.Mutex
 }
 
 func NewKernel(db *ent.Client, dataDir string) *Kernel {
@@ -32,22 +34,26 @@ func NewKernel(db *ent.Client, dataDir string) *Kernel {
 	sch := execution.NewScheduler(pool)
 	reg := agents.NewRegistry()
 	eng := cognition.NewEngine(db)
+	gar := gardener.NewGardener(db)
 
 	return &Kernel{
-		ctx:      ctx,
-		cancel:   cancel,
-		EventBus: eb,
-		Pool:     pool,
-		Scheduler: sch,
-		DB:       db,
-		WorkspaceMgr: workspace.NewManager(nil, dataDir),
-		Registry: reg,
-		Engine: eng,
+		ctx:          ctx,
+		cancel:       cancel,
+		EventBus:     eb,
+		Pool:         pool,
+		Scheduler:    sch,
+		DB:           db,
+		WorkspaceMgr: workspace.NewManager(db, dataDir),
+		Registry:     reg,
+		Engine:       eng,
+		Gardener:     gar,
 	}
 }
 
 func (k *Kernel) Start() {
-	// Startup logic
+	k.Pool.Start(k.ctx)
+	k.Gardener.Start(k.ctx)
+	fmt.Println("Kernel: All background systems started.")
 }
 
 func (k *Kernel) Shutdown() {

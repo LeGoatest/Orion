@@ -28,10 +28,8 @@ func (wp *WorkerPool) Start(ctx context.Context) {
 			for {
 				select {
 				case j := <-wp.queue:
-					fmt.Printf("Worker %d: Job %s starting\n", id, j.ID())
-					if err := j.Execute(ctx); err != nil {
-						fmt.Printf("Worker %d: Job %s failed: %v\n", id, j.ID(), err)
-					}
+					// Job is now a function in types.Job
+					j(ctx)
 				case <-ctx.Done():
 					return
 				}
@@ -42,6 +40,11 @@ func (wp *WorkerPool) Start(ctx context.Context) {
 
 func (wp *WorkerPool) Submit(j types.Job) {
 	wp.queue <- j
+}
+
+func (wp *WorkerPool) Shutdown() {
+	// Simple wait for goroutines to finish after context cancel
+	wp.wg.Wait()
 }
 
 type Scheduler struct {

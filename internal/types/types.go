@@ -65,8 +65,4 @@ func (eb *EventBus) Publish(e Event) {
 	}
 }
 
-type Job interface {
-	Execute(ctx context.Context) error
-	ID() string
-	Type() string
-}
+type Job func(ctx context.Context)

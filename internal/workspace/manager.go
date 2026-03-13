@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"orion/ent"
-	"orion/ent/workspace"
 	"sync"
 )
 
@@ -37,8 +36,6 @@ func (m *Manager) Start(ctx context.Context) {
 	}
 
 	for _, w := range ws {
-		// In a real impl, we'd use the stored ID. Ent uses int by default unless UUID is used.
-		// For bootstrap, we'll just log.
 		fmt.Printf("Loading workspace: %s at %s\n", w.Name, w.Path)
 	}
 }

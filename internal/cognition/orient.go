@@ -1,26 +1,26 @@
 package cognition
 
 import (
-	"fmt"
-	"orion/internal/symbols"
+	"context"
+	"orion/ent"
+	"orion/ent/goal"
 	"time"
 )
 
-func (ce *Engine) Orient(observation interface{}) (*SituationalModel, error) {
-	fmt.Println("Cognition: Phase [Orient] - Building Situational Awareness")
-
-	// Unify goal, workspace, code, patterns, retrieval, available capabilities, and governance
-	model := &SituationalModel{
-		GoalID:           "current-goal",
-		GoalContext:      fmt.Sprintf("%v", observation),
-		WorkspaceContext: "active-workspace",
-		CodeContext:      []symbols.Symbol{}, // Populate from symbol lookup
-		PatternContext:   []string{},         // Populate from pattern detector
-		RetrievalContext: []string{},         // Populate from hybrid retrieval
-		Capabilities:     []string{"CODE_INDEX", "RETRIEVAL", "PLAN"},
-		GovernanceRules:  []string{"SAGE-1.0", "ISO-27001-COMPLIANT"},
-		Timestamp:        time.Now(),
+func Orient(ctx context.Context, client *ent.Client, event *NormalizedEvent) (*SituationalModel, error) {
+	g, err := client.Goal.Query().Where(goal.ID(event.GoalID)).Only(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return model, nil
+	// In a real implementation, we would perform lookups here.
+	// For stabilization, we return the model with the goal.
+	return &SituationalModel{
+		Goal:             g,
+		WorkspaceContext: "default_workspace",
+		Symbols:          nil,
+		Memories:         nil,
+		Patterns:         nil,
+		Timestamp:        time.Now(),
+	}, nil
 }

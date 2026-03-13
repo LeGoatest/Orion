@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"orion/ent/goal"
+	"orion/ent/goalevent"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -100,6 +101,21 @@ func (_c *GoalCreate) SetNillableUpdatedAt(v *time.Time) *GoalCreate {
 func (_c *GoalCreate) SetID(v string) *GoalCreate {
 	_c.mutation.SetID(v)
 	return _c
+}
+
+// AddEventIDs adds the "events" edge to the GoalEvent entity by IDs.
+func (_c *GoalCreate) AddEventIDs(ids ...int) *GoalCreate {
+	_c.mutation.AddEventIDs(ids...)
+	return _c
+}
+
+// AddEvents adds the "events" edges to the GoalEvent entity.
+func (_c *GoalCreate) AddEvents(v ...*GoalEvent) *GoalCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEventIDs(ids...)
 }
 
 // Mutation returns the GoalMutation object of the builder.
@@ -230,6 +246,22 @@ func (_c *GoalCreate) createSpec() (*Goal, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(goal.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   goal.EventsTable,
+			Columns: []string{goal.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

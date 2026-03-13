@@ -44,14 +44,6 @@ func (_c *JobCreate) SetStatus(v string) *JobCreate {
 	return _c
 }
 
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_c *JobCreate) SetNillableStatus(v *string) *JobCreate {
-	if v != nil {
-		_c.SetStatus(*v)
-	}
-	return _c
-}
-
 // SetRetryCount sets the "retry_count" field.
 func (_c *JobCreate) SetRetryCount(v int) *JobCreate {
 	_c.mutation.SetRetryCount(v)
@@ -135,10 +127,6 @@ func (_c *JobCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *JobCreate) defaults() {
-	if _, ok := _c.mutation.Status(); !ok {
-		v := job.DefaultStatus
-		_c.mutation.SetStatus(v)
-	}
 	if _, ok := _c.mutation.RetryCount(); !ok {
 		v := job.DefaultRetryCount
 		_c.mutation.SetRetryCount(v)

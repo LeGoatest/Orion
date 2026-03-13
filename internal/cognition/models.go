@@ -1,35 +1,36 @@
 package cognition
 
 import (
-	"orion/internal/symbols"
+	"orion/ent"
 	"time"
 )
 
+type NormalizedEvent struct {
+	ID        string
+	GoalID    string
+	Type      string
+	Payload   map[string]interface{}
+	Timestamp time.Time
+}
+
 type SituationalModel struct {
-	GoalID           string
-	GoalContext      string
+	Goal             *ent.Goal
 	WorkspaceContext string
-	CodeContext      []symbols.Symbol
-	PatternContext   []string
-	RetrievalContext []string
-	Capabilities     []string
-	GovernanceRules  []string
+	Symbols          []*ent.CodeSymbol
+	Memories         []*ent.MemoryNode
+	Patterns         []*ent.Pattern
 	Timestamp        time.Time
 }
 
-type DecisionModel struct {
-	SituationalModel *SituationalModel
-	PlanSteps        []string
-	SelectedTools    []string
-	StrategyChoice   string
-	Timestamp        time.Time
+type ExecutionPlan struct {
+	GoalID string
+	Steps  []string
+	Tools  []string
 }
 
-type OutcomeModel struct {
-	GoalID         string
-	DecisionModel  *DecisionModel
-	ActionResult   interface{}
-	Success        bool
-	OutcomeSummary string
-	Timestamp      time.Time
+type OutcomeRecord struct {
+	GoalID    string
+	Success   bool
+	Result    interface{}
+	Timestamp time.Time
 }

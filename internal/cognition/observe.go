@@ -1,11 +1,26 @@
 package cognition
 
 import (
-	"fmt"
+	"context"
+	"orion/ent"
+	"time"
+	"github.com/google/uuid"
 )
 
-func (ce *Engine) Observe(intent string) interface{} {
-	fmt.Println("Cognition: Phase [Observe]")
-	// Capture user intent, create user_goal memory node, record observe event
-	return intent
+func Observe(ctx context.Context, client *ent.Client, intent string) (*NormalizedEvent, error) {
+	goal, err := client.Goal.Create().
+		SetDescription(intent).
+		SetStatus("pending").
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &NormalizedEvent{
+		ID:        uuid.New().String(),
+		GoalID:    goal.ID,
+		Type:      "user_intent",
+		Payload:   map[string]interface{}{"description": intent},
+		Timestamp: time.Now(),
+	}, nil
 }

@@ -12,10 +12,20 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// CodeSymbol is the client for interacting with the CodeSymbol builders.
+	CodeSymbol *CodeSymbolClient
 	// Goal is the client for interacting with the Goal builders.
 	Goal *GoalClient
+	// GoalEvent is the client for interacting with the GoalEvent builders.
+	GoalEvent *GoalEventClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// MemoryNode is the client for interacting with the MemoryNode builders.
+	MemoryNode *MemoryNodeClient
+	// Pattern is the client for interacting with the Pattern builders.
+	Pattern *PatternClient
+	// Workspace is the client for interacting with the Workspace builders.
+	Workspace *WorkspaceClient
 
 	// lazily loaded.
 	client     *Client
@@ -147,8 +157,13 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.CodeSymbol = NewCodeSymbolClient(tx.config)
 	tx.Goal = NewGoalClient(tx.config)
+	tx.GoalEvent = NewGoalEventClient(tx.config)
 	tx.Job = NewJobClient(tx.config)
+	tx.MemoryNode = NewMemoryNodeClient(tx.config)
+	tx.Pattern = NewPatternClient(tx.config)
+	tx.Workspace = NewWorkspaceClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
@@ -158,7 +173,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Goal.QueryXXX(), the query will be executed
+// applies a query, for example: CodeSymbol.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

@@ -14,17 +14,17 @@ func NewEngine(client *ent.Client) *Engine {
 }
 
 func (e *Engine) Run(ctx context.Context, intent string) error {
-	goal, err := Observe(ctx, e.client, intent)
+	event, err := Observe(ctx, e.client, intent)
 	if err != nil {
 		return err
 	}
 
-	c, err := Orient(ctx, e.client, goal)
+	sm, err := Orient(ctx, e.client, event)
 	if err != nil {
 		return err
 	}
 
-	plan, err := Decide(ctx, c)
+	plan, err := Decide(ctx, sm)
 	if err != nil {
 		return err
 	}
@@ -34,5 +34,6 @@ func (e *Engine) Run(ctx context.Context, intent string) error {
 		return err
 	}
 
-	return Learn(ctx, e.client, goal)
+	_, err = Learn(ctx, e.client, plan)
+	return err
 }
