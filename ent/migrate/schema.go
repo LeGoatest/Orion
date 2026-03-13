@@ -8,27 +8,12 @@ import (
 )
 
 var (
-	// CodeSymbolsColumns holds the columns for the "code_symbols" table.
-	CodeSymbolsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
-		{Name: "kind", Type: field.TypeString},
-		{Name: "language", Type: field.TypeString},
-		{Name: "path", Type: field.TypeString},
-		{Name: "line", Type: field.TypeInt},
-	}
-	// CodeSymbolsTable holds the schema information for the "code_symbols" table.
-	CodeSymbolsTable = &schema.Table{
-		Name:       "code_symbols",
-		Columns:    CodeSymbolsColumns,
-		PrimaryKey: []*schema.Column{CodeSymbolsColumns[0]},
-	}
 	// GoalsColumns holds the columns for the "goals" table.
 	GoalsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
-		{Name: "description", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Size: 2147483647},
 		{Name: "current_stage", Type: field.TypeString, Default: "OBSERVE"},
-		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "status", Type: field.TypeString, Default: "PENDING"},
 		{Name: "assigned_agent", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -39,35 +24,13 @@ var (
 		Columns:    GoalsColumns,
 		PrimaryKey: []*schema.Column{GoalsColumns[0]},
 	}
-	// GoalEventsColumns holds the columns for the "goal_events" table.
-	GoalEventsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "type", Type: field.TypeString},
-		{Name: "payload", Type: field.TypeJSON},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "goal_events", Type: field.TypeString, Nullable: true},
-	}
-	// GoalEventsTable holds the schema information for the "goal_events" table.
-	GoalEventsTable = &schema.Table{
-		Name:       "goal_events",
-		Columns:    GoalEventsColumns,
-		PrimaryKey: []*schema.Column{GoalEventsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "goal_events_goals_events",
-				Columns:    []*schema.Column{GoalEventsColumns[4]},
-				RefColumns: []*schema.Column{GoalsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// JobsColumns holds the columns for the "jobs" table.
 	JobsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
 		{Name: "goal_id", Type: field.TypeString},
 		{Name: "stage", Type: field.TypeString},
 		{Name: "assigned_agent", Type: field.TypeString},
-		{Name: "status", Type: field.TypeString},
+		{Name: "status", Type: field.TypeString, Default: "PENDING"},
 		{Name: "retry_count", Type: field.TypeInt, Default: 0},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "finished_at", Type: field.TypeTime, Nullable: true},
@@ -78,61 +41,12 @@ var (
 		Columns:    JobsColumns,
 		PrimaryKey: []*schema.Column{JobsColumns[0]},
 	}
-	// MemoryNodesColumns holds the columns for the "memory_nodes" table.
-	MemoryNodesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "type", Type: field.TypeString},
-		{Name: "content", Type: field.TypeString, Size: 2147483647},
-		{Name: "importance", Type: field.TypeFloat64, Default: 0},
-		{Name: "usage_count", Type: field.TypeInt, Default: 0},
-		{Name: "archived", Type: field.TypeBool, Default: false},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-	}
-	// MemoryNodesTable holds the schema information for the "memory_nodes" table.
-	MemoryNodesTable = &schema.Table{
-		Name:       "memory_nodes",
-		Columns:    MemoryNodesColumns,
-		PrimaryKey: []*schema.Column{MemoryNodesColumns[0]},
-	}
-	// PatternsColumns holds the columns for the "patterns" table.
-	PatternsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
-		{Name: "description", Type: field.TypeString, Size: 2147483647},
-		{Name: "metadata", Type: field.TypeJSON},
-		{Name: "created_at", Type: field.TypeTime},
-	}
-	// PatternsTable holds the schema information for the "patterns" table.
-	PatternsTable = &schema.Table{
-		Name:       "patterns",
-		Columns:    PatternsColumns,
-		PrimaryKey: []*schema.Column{PatternsColumns[0]},
-	}
-	// WorkspacesColumns holds the columns for the "workspaces" table.
-	WorkspacesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString, Unique: true},
-		{Name: "path", Type: field.TypeString, Unique: true},
-	}
-	// WorkspacesTable holds the schema information for the "workspaces" table.
-	WorkspacesTable = &schema.Table{
-		Name:       "workspaces",
-		Columns:    WorkspacesColumns,
-		PrimaryKey: []*schema.Column{WorkspacesColumns[0]},
-	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		CodeSymbolsTable,
 		GoalsTable,
-		GoalEventsTable,
 		JobsTable,
-		MemoryNodesTable,
-		PatternsTable,
-		WorkspacesTable,
 	}
 )
 
 func init() {
-	GoalEventsTable.ForeignKeys[0].RefTable = GoalsTable
 }

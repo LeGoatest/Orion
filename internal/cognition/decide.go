@@ -6,11 +6,15 @@ import (
 )
 
 func Decide(ctx context.Context, sm *SituationalModel) (*ExecutionPlan, error) {
-	// Deterministic rule-based planner
+	fmt.Printf("Cognition: Deciding on plan for goal %s\n", sm.GoalID)
+	fmt.Printf("Orientation Summary: %s\n", sm.OrientationSummary)
+
+	// Deterministic rule-based planner using the SituationalModel
 	plan := &ExecutionPlan{
-		GoalID: sm.Goal.ID,
-		Steps:  []string{fmt.Sprintf("Execute logic for: %s", sm.Goal.Description)},
-		Tools:  []string{"logger"},
+		GoalID: sm.GoalID,
+		Steps:  []string{fmt.Sprintf("Rule-based execution for: %s", sm.OrientationSummary)},
+		Tools:  sm.CapabilityCandidates,
 	}
+
 	return plan, nil
 }

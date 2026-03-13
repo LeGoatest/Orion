@@ -14,12 +14,17 @@ type NormalizedEvent struct {
 }
 
 type SituationalModel struct {
-	Goal             *ent.Goal
-	WorkspaceContext string
-	Symbols          []*ent.CodeSymbol
-	Memories         []*ent.MemoryNode
-	Patterns         []*ent.Pattern
-	Timestamp        time.Time
+	GoalID               string
+	WorkspaceID          string
+	NormalizedEvent      *NormalizedEvent
+	ActiveSymbols        []*ent.CodeSymbol
+	PatternMatches       []*ent.Pattern
+	MemoryHits           []*ent.MemoryNode
+	CapabilityCandidates []string
+	ConstraintSet        []string
+	ConfidenceSignals    map[string]float64
+	OrientationSummary   string
+	Timestamp            time.Time
 }
 
 type ExecutionPlan struct {

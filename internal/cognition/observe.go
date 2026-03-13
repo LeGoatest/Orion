@@ -9,6 +9,7 @@ import (
 
 func Observe(ctx context.Context, client *ent.Client, intent string) (*NormalizedEvent, error) {
 	goal, err := client.Goal.Create().
+		SetID(uuid.New().String()).
 		SetDescription(intent).
 		SetStatus("pending").
 		Save(ctx)

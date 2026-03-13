@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"orion/ent/goal"
-	"orion/ent/goalevent"
 	"orion/ent/predicate"
 	"time"
 
@@ -111,45 +110,9 @@ func (_u *GoalUpdate) SetUpdatedAt(v time.Time) *GoalUpdate {
 	return _u
 }
 
-// AddEventIDs adds the "events" edge to the GoalEvent entity by IDs.
-func (_u *GoalUpdate) AddEventIDs(ids ...int) *GoalUpdate {
-	_u.mutation.AddEventIDs(ids...)
-	return _u
-}
-
-// AddEvents adds the "events" edges to the GoalEvent entity.
-func (_u *GoalUpdate) AddEvents(v ...*GoalEvent) *GoalUpdate {
-	ids := make([]int, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddEventIDs(ids...)
-}
-
 // Mutation returns the GoalMutation object of the builder.
 func (_u *GoalUpdate) Mutation() *GoalMutation {
 	return _u.mutation
-}
-
-// ClearEvents clears all "events" edges to the GoalEvent entity.
-func (_u *GoalUpdate) ClearEvents() *GoalUpdate {
-	_u.mutation.ClearEvents()
-	return _u
-}
-
-// RemoveEventIDs removes the "events" edge to GoalEvent entities by IDs.
-func (_u *GoalUpdate) RemoveEventIDs(ids ...int) *GoalUpdate {
-	_u.mutation.RemoveEventIDs(ids...)
-	return _u
-}
-
-// RemoveEvents removes "events" edges to GoalEvent entities.
-func (_u *GoalUpdate) RemoveEvents(v ...*GoalEvent) *GoalUpdate {
-	ids := make([]int, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveEventIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -217,51 +180,6 @@ func (_u *GoalUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(goal.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.EventsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   goal.EventsTable,
-			Columns: []string{goal.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedEventsIDs(); len(nodes) > 0 && !_u.mutation.EventsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   goal.EventsTable,
-			Columns: []string{goal.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.EventsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   goal.EventsTable,
-			Columns: []string{goal.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -365,45 +283,9 @@ func (_u *GoalUpdateOne) SetUpdatedAt(v time.Time) *GoalUpdateOne {
 	return _u
 }
 
-// AddEventIDs adds the "events" edge to the GoalEvent entity by IDs.
-func (_u *GoalUpdateOne) AddEventIDs(ids ...int) *GoalUpdateOne {
-	_u.mutation.AddEventIDs(ids...)
-	return _u
-}
-
-// AddEvents adds the "events" edges to the GoalEvent entity.
-func (_u *GoalUpdateOne) AddEvents(v ...*GoalEvent) *GoalUpdateOne {
-	ids := make([]int, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddEventIDs(ids...)
-}
-
 // Mutation returns the GoalMutation object of the builder.
 func (_u *GoalUpdateOne) Mutation() *GoalMutation {
 	return _u.mutation
-}
-
-// ClearEvents clears all "events" edges to the GoalEvent entity.
-func (_u *GoalUpdateOne) ClearEvents() *GoalUpdateOne {
-	_u.mutation.ClearEvents()
-	return _u
-}
-
-// RemoveEventIDs removes the "events" edge to GoalEvent entities by IDs.
-func (_u *GoalUpdateOne) RemoveEventIDs(ids ...int) *GoalUpdateOne {
-	_u.mutation.RemoveEventIDs(ids...)
-	return _u
-}
-
-// RemoveEvents removes "events" edges to GoalEvent entities.
-func (_u *GoalUpdateOne) RemoveEvents(v ...*GoalEvent) *GoalUpdateOne {
-	ids := make([]int, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveEventIDs(ids...)
 }
 
 // Where appends a list predicates to the GoalUpdate builder.
@@ -501,51 +383,6 @@ func (_u *GoalUpdateOne) sqlSave(ctx context.Context) (_node *Goal, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(goal.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.EventsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   goal.EventsTable,
-			Columns: []string{goal.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedEventsIDs(); len(nodes) > 0 && !_u.mutation.EventsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   goal.EventsTable,
-			Columns: []string{goal.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.EventsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   goal.EventsTable,
-			Columns: []string{goal.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(goalevent.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Goal{config: _u.config}
 	_spec.Assign = _node.assignValues

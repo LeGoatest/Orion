@@ -4,11 +4,9 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 	"orion/ent/goal"
-	"orion/ent/goalevent"
 	"orion/ent/predicate"
 
 	"entgo.io/ent"
@@ -24,7 +22,6 @@ type GoalQuery struct {
 	order      []goal.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Goal
-	withEvents *GoalEventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -59,28 +56,6 @@ func (_q *GoalQuery) Unique(unique bool) *GoalQuery {
 func (_q *GoalQuery) Order(o ...goal.OrderOption) *GoalQuery {
 	_q.order = append(_q.order, o...)
 	return _q
-}
-
-// QueryEvents chains the current query on the "events" edge.
-func (_q *GoalQuery) QueryEvents() *GoalEventQuery {
-	query := (&GoalEventClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(goal.Table, goal.FieldID, selector),
-			sqlgraph.To(goalevent.Table, goalevent.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, goal.EventsTable, goal.EventsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
 }
 
 // First returns the first Goal entity from the query.
@@ -275,22 +250,10 @@ func (_q *GoalQuery) Clone() *GoalQuery {
 		order:      append([]goal.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
 		predicates: append([]predicate.Goal{}, _q.predicates...),
-		withEvents: _q.withEvents.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
-}
-
-// WithEvents tells the query-builder to eager-load the nodes that are connected to
-// the "events" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *GoalQuery) WithEvents(opts ...func(*GoalEventQuery)) *GoalQuery {
-	query := (&GoalEventClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withEvents = query
-	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -369,11 +332,8 @@ func (_q *GoalQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *GoalQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Goal, error) {
 	var (
-		nodes       = []*Goal{}
-		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
-			_q.withEvents != nil,
-		}
+		nodes = []*Goal{}
+		_spec = _q.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Goal).scanValues(nil, columns)
@@ -381,7 +341,6 @@ func (_q *GoalQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Goal, e
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Goal{config: _q.config}
 		nodes = append(nodes, node)
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -393,46 +352,7 @@ func (_q *GoalQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Goal, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withEvents; query != nil {
-		if err := _q.loadEvents(ctx, query, nodes,
-			func(n *Goal) { n.Edges.Events = []*GoalEvent{} },
-			func(n *Goal, e *GoalEvent) { n.Edges.Events = append(n.Edges.Events, e) }); err != nil {
-			return nil, err
-		}
-	}
 	return nodes, nil
-}
-
-func (_q *GoalQuery) loadEvents(ctx context.Context, query *GoalEventQuery, nodes []*Goal, init func(*Goal), assign func(*Goal, *GoalEvent)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[string]*Goal)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.GoalEvent(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(goal.EventsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.goal_events
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "goal_events" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "goal_events" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
 }
 
 func (_q *GoalQuery) sqlCount(ctx context.Context) (int, error) {

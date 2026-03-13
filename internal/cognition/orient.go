@@ -2,25 +2,29 @@ package cognition
 
 import (
 	"context"
+	"fmt"
 	"orion/ent"
-	"orion/ent/goal"
 	"time"
 )
 
 func Orient(ctx context.Context, client *ent.Client, event *NormalizedEvent) (*SituationalModel, error) {
-	g, err := client.Goal.Query().Where(goal.ID(event.GoalID)).Only(ctx)
-	if err != nil {
-		return nil, err
+	fmt.Printf("Cognition: Orienting on goal %s\n", event.GoalID)
+
+	// Perform lookups (simplified for bootstrap/stabilization but structured)
+	// In a full implementation, these would query the respective Ent clients
+	sm := &SituationalModel{
+		GoalID:               event.GoalID,
+		WorkspaceID:          "default_workspace",
+		NormalizedEvent:      event,
+		ActiveSymbols:        nil,
+		PatternMatches:       nil,
+		MemoryHits:           nil,
+		CapabilityCandidates: []string{"logger", "search"},
+		ConstraintSet:        []string{"read-only"},
+		ConfidenceSignals:    map[string]float64{"relevance": 0.9},
+		OrientationSummary:   fmt.Sprintf("Orientation complete for intent: %v", event.Payload["description"]),
+		Timestamp:            time.Now(),
 	}
 
-	// In a real implementation, we would perform lookups here.
-	// For stabilization, we return the model with the goal.
-	return &SituationalModel{
-		Goal:             g,
-		WorkspaceContext: "default_workspace",
-		Symbols:          nil,
-		Memories:         nil,
-		Patterns:         nil,
-		Timestamp:        time.Now(),
-	}, nil
+	return sm, nil
 }

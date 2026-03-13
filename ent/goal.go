@@ -28,29 +28,8 @@ type Goal struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the GoalQuery when eager-loading is set.
-	Edges        GoalEdges `json:"edges"`
+	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	selectValues sql.SelectValues
-}
-
-// GoalEdges holds the relations/edges for other nodes in the graph.
-type GoalEdges struct {
-	// Events holds the value of the events edge.
-	Events []*GoalEvent `json:"events,omitempty"`
-	// loadedTypes holds the information for reporting if a
-	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
-}
-
-// EventsOrErr returns the Events value or an error if the edge
-// was not loaded in eager-loading.
-func (e GoalEdges) EventsOrErr() ([]*GoalEvent, error) {
-	if e.loadedTypes[0] {
-		return e.Events, nil
-	}
-	return nil, &NotLoadedError{edge: "events"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -130,11 +109,6 @@ func (_m *Goal) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Goal) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
-}
-
-// QueryEvents queries the "events" edge of the Goal entity.
-func (_m *Goal) QueryEvents() *GoalEventQuery {
-	return NewGoalClient(_m.config).QueryEvents(_m)
 }
 
 // Update returns a builder for updating this Goal.
