@@ -11,8 +11,12 @@ import (
 
 	"orion/ent/migrate"
 
+	"orion/ent/codesymbol"
 	"orion/ent/goal"
 	"orion/ent/job"
+	"orion/ent/memorynode"
+	"orion/ent/pattern"
+	"orion/ent/workspace"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -24,10 +28,18 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// CodeSymbol is the client for interacting with the CodeSymbol builders.
+	CodeSymbol *CodeSymbolClient
 	// Goal is the client for interacting with the Goal builders.
 	Goal *GoalClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// MemoryNode is the client for interacting with the MemoryNode builders.
+	MemoryNode *MemoryNodeClient
+	// Pattern is the client for interacting with the Pattern builders.
+	Pattern *PatternClient
+	// Workspace is the client for interacting with the Workspace builders.
+	Workspace *WorkspaceClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -39,8 +51,12 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.CodeSymbol = NewCodeSymbolClient(c.config)
 	c.Goal = NewGoalClient(c.config)
 	c.Job = NewJobClient(c.config)
+	c.MemoryNode = NewMemoryNodeClient(c.config)
+	c.Pattern = NewPatternClient(c.config)
+	c.Workspace = NewWorkspaceClient(c.config)
 }
 
 type (
@@ -131,10 +147,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Goal:   NewGoalClient(cfg),
-		Job:    NewJobClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		CodeSymbol: NewCodeSymbolClient(cfg),
+		Goal:       NewGoalClient(cfg),
+		Job:        NewJobClient(cfg),
+		MemoryNode: NewMemoryNodeClient(cfg),
+		Pattern:    NewPatternClient(cfg),
+		Workspace:  NewWorkspaceClient(cfg),
 	}, nil
 }
 
@@ -152,17 +172,21 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Goal:   NewGoalClient(cfg),
-		Job:    NewJobClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		CodeSymbol: NewCodeSymbolClient(cfg),
+		Goal:       NewGoalClient(cfg),
+		Job:        NewJobClient(cfg),
+		MemoryNode: NewMemoryNodeClient(cfg),
+		Pattern:    NewPatternClient(cfg),
+		Workspace:  NewWorkspaceClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Goal.
+//		CodeSymbol.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -184,26 +208,173 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Goal.Use(hooks...)
-	c.Job.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.CodeSymbol, c.Goal, c.Job, c.MemoryNode, c.Pattern, c.Workspace,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Goal.Intercept(interceptors...)
-	c.Job.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.CodeSymbol, c.Goal, c.Job, c.MemoryNode, c.Pattern, c.Workspace,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *CodeSymbolMutation:
+		return c.CodeSymbol.mutate(ctx, m)
 	case *GoalMutation:
 		return c.Goal.mutate(ctx, m)
 	case *JobMutation:
 		return c.Job.mutate(ctx, m)
+	case *MemoryNodeMutation:
+		return c.MemoryNode.mutate(ctx, m)
+	case *PatternMutation:
+		return c.Pattern.mutate(ctx, m)
+	case *WorkspaceMutation:
+		return c.Workspace.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// CodeSymbolClient is a client for the CodeSymbol schema.
+type CodeSymbolClient struct {
+	config
+}
+
+// NewCodeSymbolClient returns a client for the CodeSymbol from the given config.
+func NewCodeSymbolClient(c config) *CodeSymbolClient {
+	return &CodeSymbolClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `codesymbol.Hooks(f(g(h())))`.
+func (c *CodeSymbolClient) Use(hooks ...Hook) {
+	c.hooks.CodeSymbol = append(c.hooks.CodeSymbol, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `codesymbol.Intercept(f(g(h())))`.
+func (c *CodeSymbolClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CodeSymbol = append(c.inters.CodeSymbol, interceptors...)
+}
+
+// Create returns a builder for creating a CodeSymbol entity.
+func (c *CodeSymbolClient) Create() *CodeSymbolCreate {
+	mutation := newCodeSymbolMutation(c.config, OpCreate)
+	return &CodeSymbolCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CodeSymbol entities.
+func (c *CodeSymbolClient) CreateBulk(builders ...*CodeSymbolCreate) *CodeSymbolCreateBulk {
+	return &CodeSymbolCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CodeSymbolClient) MapCreateBulk(slice any, setFunc func(*CodeSymbolCreate, int)) *CodeSymbolCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CodeSymbolCreateBulk{err: fmt.Errorf("calling to CodeSymbolClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CodeSymbolCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CodeSymbolCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CodeSymbol.
+func (c *CodeSymbolClient) Update() *CodeSymbolUpdate {
+	mutation := newCodeSymbolMutation(c.config, OpUpdate)
+	return &CodeSymbolUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CodeSymbolClient) UpdateOne(_m *CodeSymbol) *CodeSymbolUpdateOne {
+	mutation := newCodeSymbolMutation(c.config, OpUpdateOne, withCodeSymbol(_m))
+	return &CodeSymbolUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CodeSymbolClient) UpdateOneID(id int) *CodeSymbolUpdateOne {
+	mutation := newCodeSymbolMutation(c.config, OpUpdateOne, withCodeSymbolID(id))
+	return &CodeSymbolUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CodeSymbol.
+func (c *CodeSymbolClient) Delete() *CodeSymbolDelete {
+	mutation := newCodeSymbolMutation(c.config, OpDelete)
+	return &CodeSymbolDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CodeSymbolClient) DeleteOne(_m *CodeSymbol) *CodeSymbolDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CodeSymbolClient) DeleteOneID(id int) *CodeSymbolDeleteOne {
+	builder := c.Delete().Where(codesymbol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CodeSymbolDeleteOne{builder}
+}
+
+// Query returns a query builder for CodeSymbol.
+func (c *CodeSymbolClient) Query() *CodeSymbolQuery {
+	return &CodeSymbolQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCodeSymbol},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CodeSymbol entity by its id.
+func (c *CodeSymbolClient) Get(ctx context.Context, id int) (*CodeSymbol, error) {
+	return c.Query().Where(codesymbol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CodeSymbolClient) GetX(ctx context.Context, id int) *CodeSymbol {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CodeSymbolClient) Hooks() []Hook {
+	return c.hooks.CodeSymbol
+}
+
+// Interceptors returns the client interceptors.
+func (c *CodeSymbolClient) Interceptors() []Interceptor {
+	return c.inters.CodeSymbol
+}
+
+func (c *CodeSymbolClient) mutate(ctx context.Context, m *CodeSymbolMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CodeSymbolCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CodeSymbolUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CodeSymbolUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CodeSymbolDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CodeSymbol mutation op: %q", m.Op())
 	}
 }
 
@@ -473,12 +644,411 @@ func (c *JobClient) mutate(ctx context.Context, m *JobMutation) (Value, error) {
 	}
 }
 
+// MemoryNodeClient is a client for the MemoryNode schema.
+type MemoryNodeClient struct {
+	config
+}
+
+// NewMemoryNodeClient returns a client for the MemoryNode from the given config.
+func NewMemoryNodeClient(c config) *MemoryNodeClient {
+	return &MemoryNodeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `memorynode.Hooks(f(g(h())))`.
+func (c *MemoryNodeClient) Use(hooks ...Hook) {
+	c.hooks.MemoryNode = append(c.hooks.MemoryNode, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `memorynode.Intercept(f(g(h())))`.
+func (c *MemoryNodeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MemoryNode = append(c.inters.MemoryNode, interceptors...)
+}
+
+// Create returns a builder for creating a MemoryNode entity.
+func (c *MemoryNodeClient) Create() *MemoryNodeCreate {
+	mutation := newMemoryNodeMutation(c.config, OpCreate)
+	return &MemoryNodeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MemoryNode entities.
+func (c *MemoryNodeClient) CreateBulk(builders ...*MemoryNodeCreate) *MemoryNodeCreateBulk {
+	return &MemoryNodeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MemoryNodeClient) MapCreateBulk(slice any, setFunc func(*MemoryNodeCreate, int)) *MemoryNodeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MemoryNodeCreateBulk{err: fmt.Errorf("calling to MemoryNodeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MemoryNodeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MemoryNodeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MemoryNode.
+func (c *MemoryNodeClient) Update() *MemoryNodeUpdate {
+	mutation := newMemoryNodeMutation(c.config, OpUpdate)
+	return &MemoryNodeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MemoryNodeClient) UpdateOne(_m *MemoryNode) *MemoryNodeUpdateOne {
+	mutation := newMemoryNodeMutation(c.config, OpUpdateOne, withMemoryNode(_m))
+	return &MemoryNodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MemoryNodeClient) UpdateOneID(id int) *MemoryNodeUpdateOne {
+	mutation := newMemoryNodeMutation(c.config, OpUpdateOne, withMemoryNodeID(id))
+	return &MemoryNodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MemoryNode.
+func (c *MemoryNodeClient) Delete() *MemoryNodeDelete {
+	mutation := newMemoryNodeMutation(c.config, OpDelete)
+	return &MemoryNodeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MemoryNodeClient) DeleteOne(_m *MemoryNode) *MemoryNodeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MemoryNodeClient) DeleteOneID(id int) *MemoryNodeDeleteOne {
+	builder := c.Delete().Where(memorynode.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MemoryNodeDeleteOne{builder}
+}
+
+// Query returns a query builder for MemoryNode.
+func (c *MemoryNodeClient) Query() *MemoryNodeQuery {
+	return &MemoryNodeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMemoryNode},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MemoryNode entity by its id.
+func (c *MemoryNodeClient) Get(ctx context.Context, id int) (*MemoryNode, error) {
+	return c.Query().Where(memorynode.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MemoryNodeClient) GetX(ctx context.Context, id int) *MemoryNode {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MemoryNodeClient) Hooks() []Hook {
+	return c.hooks.MemoryNode
+}
+
+// Interceptors returns the client interceptors.
+func (c *MemoryNodeClient) Interceptors() []Interceptor {
+	return c.inters.MemoryNode
+}
+
+func (c *MemoryNodeClient) mutate(ctx context.Context, m *MemoryNodeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MemoryNodeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MemoryNodeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MemoryNodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MemoryNodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MemoryNode mutation op: %q", m.Op())
+	}
+}
+
+// PatternClient is a client for the Pattern schema.
+type PatternClient struct {
+	config
+}
+
+// NewPatternClient returns a client for the Pattern from the given config.
+func NewPatternClient(c config) *PatternClient {
+	return &PatternClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pattern.Hooks(f(g(h())))`.
+func (c *PatternClient) Use(hooks ...Hook) {
+	c.hooks.Pattern = append(c.hooks.Pattern, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pattern.Intercept(f(g(h())))`.
+func (c *PatternClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Pattern = append(c.inters.Pattern, interceptors...)
+}
+
+// Create returns a builder for creating a Pattern entity.
+func (c *PatternClient) Create() *PatternCreate {
+	mutation := newPatternMutation(c.config, OpCreate)
+	return &PatternCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Pattern entities.
+func (c *PatternClient) CreateBulk(builders ...*PatternCreate) *PatternCreateBulk {
+	return &PatternCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PatternClient) MapCreateBulk(slice any, setFunc func(*PatternCreate, int)) *PatternCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PatternCreateBulk{err: fmt.Errorf("calling to PatternClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PatternCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PatternCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Pattern.
+func (c *PatternClient) Update() *PatternUpdate {
+	mutation := newPatternMutation(c.config, OpUpdate)
+	return &PatternUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PatternClient) UpdateOne(_m *Pattern) *PatternUpdateOne {
+	mutation := newPatternMutation(c.config, OpUpdateOne, withPattern(_m))
+	return &PatternUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PatternClient) UpdateOneID(id int) *PatternUpdateOne {
+	mutation := newPatternMutation(c.config, OpUpdateOne, withPatternID(id))
+	return &PatternUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Pattern.
+func (c *PatternClient) Delete() *PatternDelete {
+	mutation := newPatternMutation(c.config, OpDelete)
+	return &PatternDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PatternClient) DeleteOne(_m *Pattern) *PatternDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PatternClient) DeleteOneID(id int) *PatternDeleteOne {
+	builder := c.Delete().Where(pattern.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PatternDeleteOne{builder}
+}
+
+// Query returns a query builder for Pattern.
+func (c *PatternClient) Query() *PatternQuery {
+	return &PatternQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePattern},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Pattern entity by its id.
+func (c *PatternClient) Get(ctx context.Context, id int) (*Pattern, error) {
+	return c.Query().Where(pattern.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PatternClient) GetX(ctx context.Context, id int) *Pattern {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PatternClient) Hooks() []Hook {
+	return c.hooks.Pattern
+}
+
+// Interceptors returns the client interceptors.
+func (c *PatternClient) Interceptors() []Interceptor {
+	return c.inters.Pattern
+}
+
+func (c *PatternClient) mutate(ctx context.Context, m *PatternMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PatternCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PatternUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PatternUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PatternDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Pattern mutation op: %q", m.Op())
+	}
+}
+
+// WorkspaceClient is a client for the Workspace schema.
+type WorkspaceClient struct {
+	config
+}
+
+// NewWorkspaceClient returns a client for the Workspace from the given config.
+func NewWorkspaceClient(c config) *WorkspaceClient {
+	return &WorkspaceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workspace.Hooks(f(g(h())))`.
+func (c *WorkspaceClient) Use(hooks ...Hook) {
+	c.hooks.Workspace = append(c.hooks.Workspace, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workspace.Intercept(f(g(h())))`.
+func (c *WorkspaceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Workspace = append(c.inters.Workspace, interceptors...)
+}
+
+// Create returns a builder for creating a Workspace entity.
+func (c *WorkspaceClient) Create() *WorkspaceCreate {
+	mutation := newWorkspaceMutation(c.config, OpCreate)
+	return &WorkspaceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Workspace entities.
+func (c *WorkspaceClient) CreateBulk(builders ...*WorkspaceCreate) *WorkspaceCreateBulk {
+	return &WorkspaceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkspaceClient) MapCreateBulk(slice any, setFunc func(*WorkspaceCreate, int)) *WorkspaceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkspaceCreateBulk{err: fmt.Errorf("calling to WorkspaceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkspaceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkspaceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Workspace.
+func (c *WorkspaceClient) Update() *WorkspaceUpdate {
+	mutation := newWorkspaceMutation(c.config, OpUpdate)
+	return &WorkspaceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkspaceClient) UpdateOne(_m *Workspace) *WorkspaceUpdateOne {
+	mutation := newWorkspaceMutation(c.config, OpUpdateOne, withWorkspace(_m))
+	return &WorkspaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkspaceClient) UpdateOneID(id int) *WorkspaceUpdateOne {
+	mutation := newWorkspaceMutation(c.config, OpUpdateOne, withWorkspaceID(id))
+	return &WorkspaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Workspace.
+func (c *WorkspaceClient) Delete() *WorkspaceDelete {
+	mutation := newWorkspaceMutation(c.config, OpDelete)
+	return &WorkspaceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkspaceClient) DeleteOne(_m *Workspace) *WorkspaceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkspaceClient) DeleteOneID(id int) *WorkspaceDeleteOne {
+	builder := c.Delete().Where(workspace.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkspaceDeleteOne{builder}
+}
+
+// Query returns a query builder for Workspace.
+func (c *WorkspaceClient) Query() *WorkspaceQuery {
+	return &WorkspaceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkspace},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Workspace entity by its id.
+func (c *WorkspaceClient) Get(ctx context.Context, id int) (*Workspace, error) {
+	return c.Query().Where(workspace.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkspaceClient) GetX(ctx context.Context, id int) *Workspace {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *WorkspaceClient) Hooks() []Hook {
+	return c.hooks.Workspace
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkspaceClient) Interceptors() []Interceptor {
+	return c.inters.Workspace
+}
+
+func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkspaceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkspaceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkspaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkspaceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Workspace mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Goal, Job []ent.Hook
+		CodeSymbol, Goal, Job, MemoryNode, Pattern, Workspace []ent.Hook
 	}
 	inters struct {
-		Goal, Job []ent.Interceptor
+		CodeSymbol, Goal, Job, MemoryNode, Pattern, Workspace []ent.Interceptor
 	}
 )

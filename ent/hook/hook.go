@@ -8,6 +8,18 @@ import (
 	"orion/ent"
 )
 
+// The CodeSymbolFunc type is an adapter to allow the use of ordinary
+// function as CodeSymbol mutator.
+type CodeSymbolFunc func(context.Context, *ent.CodeSymbolMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CodeSymbolFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CodeSymbolMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CodeSymbolMutation", m)
+}
+
 // The GoalFunc type is an adapter to allow the use of ordinary
 // function as Goal mutator.
 type GoalFunc func(context.Context, *ent.GoalMutation) (ent.Value, error)
@@ -30,6 +42,42 @@ func (f JobFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.JobMutation", m)
+}
+
+// The MemoryNodeFunc type is an adapter to allow the use of ordinary
+// function as MemoryNode mutator.
+type MemoryNodeFunc func(context.Context, *ent.MemoryNodeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MemoryNodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MemoryNodeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MemoryNodeMutation", m)
+}
+
+// The PatternFunc type is an adapter to allow the use of ordinary
+// function as Pattern mutator.
+type PatternFunc func(context.Context, *ent.PatternMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PatternFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PatternMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PatternMutation", m)
+}
+
+// The WorkspaceFunc type is an adapter to allow the use of ordinary
+// function as Workspace mutator.
+type WorkspaceFunc func(context.Context, *ent.WorkspaceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkspaceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkspaceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkspaceMutation", m)
 }
 
 // Condition is a hook condition function.

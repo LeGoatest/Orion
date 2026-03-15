@@ -40,14 +40,15 @@ func NewKernel(db *ent.Client, dataDir string) *Kernel {
 		Pool:     pool,
 		Scheduler: sch,
 		DB:       db,
-		WorkspaceMgr: workspace.NewManager(nil, dataDir),
+		WorkspaceMgr: workspace.NewManager(db, dataDir),
 		Registry: reg,
 		Engine: eng,
 	}
 }
 
 func (k *Kernel) Start() {
-	// Startup logic
+	k.Pool.Start(k.ctx)
+	fmt.Println("Kernel started.")
 }
 
 func (k *Kernel) Shutdown() {

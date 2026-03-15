@@ -6,8 +6,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// CodeSymbol is the predicate function for codesymbol builders.
+type CodeSymbol func(*sql.Selector)
+
 // Goal is the predicate function for goal builders.
 type Goal func(*sql.Selector)
 
 // Job is the predicate function for job builders.
 type Job func(*sql.Selector)
+
+// MemoryNode is the predicate function for memorynode builders.
+type MemoryNode func(*sql.Selector)
+
+// Pattern is the predicate function for pattern builders.
+type Pattern func(*sql.Selector)
+
+// Workspace is the predicate function for workspace builders.
+type Workspace func(*sql.Selector)
