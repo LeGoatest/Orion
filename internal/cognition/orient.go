@@ -1,26 +1,30 @@
 package cognition
 
 import (
+	"context"
 	"fmt"
-	"orion/internal/symbols"
+	"orion/ent"
 	"time"
 )
 
-func (ce *Engine) Orient(observation interface{}) (*SituationalModel, error) {
-	fmt.Println("Cognition: Phase [Orient] - Building Situational Awareness")
+func Orient(ctx context.Context, client *ent.Client, event *NormalizedEvent) (*SituationalModel, error) {
+	fmt.Printf("Cognition: Orienting on goal %s\n", event.GoalID)
 
-	// Unify goal, workspace, code, patterns, retrieval, available capabilities, and governance
-	model := &SituationalModel{
-		GoalID:           "current-goal",
-		GoalContext:      fmt.Sprintf("%v", observation),
-		WorkspaceContext: "active-workspace",
-		CodeContext:      []symbols.Symbol{}, // Populate from symbol lookup
-		PatternContext:   []string{},         // Populate from pattern detector
-		RetrievalContext: []string{},         // Populate from hybrid retrieval
-		Capabilities:     []string{"CODE_INDEX", "RETRIEVAL", "PLAN"},
-		GovernanceRules:  []string{"SAGE-1.0", "ISO-27001-COMPLIANT"},
-		Timestamp:        time.Now(),
+	// Perform lookups (simplified for bootstrap/stabilization but structured)
+	// In a full implementation, these would query the respective Ent clients
+	sm := &SituationalModel{
+		GoalID:               event.GoalID,
+		WorkspaceID:          "default_workspace",
+		NormalizedEvent:      event,
+		ActiveSymbols:        nil,
+		PatternMatches:       nil,
+		MemoryHits:           nil,
+		CapabilityCandidates: []string{"logger", "search"},
+		ConstraintSet:        []string{"read-only"},
+		ConfidenceSignals:    map[string]float64{"relevance": 0.9},
+		OrientationSummary:   fmt.Sprintf("Orientation complete for intent: %v", event.Payload["description"]),
+		Timestamp:            time.Now(),
 	}
 
-	return model, nil
+	return sm, nil
 }

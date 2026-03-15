@@ -1,19 +1,25 @@
 package cognition
 
 import (
-	"fmt"
+	"context"
+	"orion/ent"
+	"orion/ent/goal"
 	"time"
 )
 
-func (ce *Engine) Learn(outcome *OutcomeModel) {
-	fmt.Printf("Cognition: Phase [Learn] - Persisting outcome for goal: %s\n", outcome.GoalID)
+func Learn(ctx context.Context, client *ent.Client, plan *ValidatedExecutionPlan) (*OutcomeRecord, error) {
+	err := client.Goal.Update().
+		Where(goal.ID(plan.Plan.GoalID)).
+		SetStatus("completed").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	// Record outcome tied to strategy and situational context
-	// This will be used in future Orient phases to improve strategy choice
-	outcome.Timestamp = time.Now()
-	outcome.OutcomeSummary = fmt.Sprintf("Strategy %s result: %v",
-		outcome.DecisionModel.StrategyChoice, outcome.ActionResult)
-
-	// Persistence logic would go here
-	fmt.Printf("Outcome: %s (Success: %v)\n", outcome.OutcomeSummary, outcome.Success)
+	return &OutcomeRecord{
+		GoalID:    plan.Plan.GoalID,
+		Success:   true,
+		Result:    "success",
+		Timestamp: time.Now(),
+	}, nil
 }

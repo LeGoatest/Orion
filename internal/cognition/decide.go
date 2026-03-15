@@ -1,21 +1,20 @@
 package cognition
 
 import (
+	"context"
 	"fmt"
-	"time"
 )
 
-func (ce *Engine) Decide(sm *SituationalModel) (*DecisionModel, error) {
-	fmt.Printf("Cognition: Phase [Decide] - Strategizing for Goal: %s\n", sm.GoalID)
+func Decide(ctx context.Context, sm *SituationalModel) (*ExecutionPlan, error) {
+	fmt.Printf("Cognition: Deciding on plan for goal %s\n", sm.GoalID)
+	fmt.Printf("Orientation Summary: %s\n", sm.OrientationSummary)
 
-	// Consume the situational model to produce a plan
-	dm := &DecisionModel{
-		SituationalModel: sm,
-		PlanSteps:        []string{"Index local code", "Identify patterns", "Assemble context"},
-		SelectedTools:    []string{"indexer", "retrieval"},
-		StrategyChoice:   "DETERMINISTIC_STEP_WISE",
-		Timestamp:        time.Now(),
+	// Deterministic rule-based planner using the SituationalModel
+	plan := &ExecutionPlan{
+		GoalID: sm.GoalID,
+		Steps:  []string{fmt.Sprintf("Rule-based execution for: %s", sm.OrientationSummary)},
+		Tools:  sm.CapabilityCandidates,
 	}
 
-	return dm, nil
+	return plan, nil
 }
